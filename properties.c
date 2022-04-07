@@ -1,5 +1,12 @@
-/* Filename: properties.c
- * Purpose: To display the properties of a BMP file.
+/*  
+ *  Filename:
+ *      properties.c
+ *  
+ *  Purpose:
+ *      To display the properties of a BMP file.
+ *  
+ *  Modifications:
+ *      07 April 2022 - created
  */
 
 #include <stdio.h>
