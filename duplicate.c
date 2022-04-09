@@ -1,4 +1,4 @@
-/* Filename: duplicate.c
+/* fname: duplicate.c
  * Purpose: To duplicate a BMP file
  */
 
@@ -18,7 +18,7 @@ typedef struct
     FILE *fileHandle;
     BYTE header[HEADERSIZE];
     BYTE colorTable[TABLESIZE];
-    BYTE *pixels;
+    BYTE *pxArray;
     int width;
     int height;
     int bitDepth;
@@ -30,9 +30,9 @@ void duplicate(BMP image);
 
 int main(void)
 {
-    char *fname;                                    // Define character pointer for filename
-    printf("%s", "Enter filename of input file: "); // Display user prompt
-    fgets(fname, FNAMELIMIT, stdin);                // Obtain filename of input file'
+    char *fname;                                    // Define character pointer for fname
+    printf("%s", "Enter fname of input file: "); // Display user prompt
+    fgets(fname, FNAMELIMIT, stdin);                // Obtain fname of input file'
     fname[strlen(fname) - 1] = 0;                   // Remove trailing whitespace
 
     BMP image;                            // Define BMP variable for input file
@@ -77,10 +77,10 @@ void setProperties(BMP *img)
 
     // Allocate the size of pixel array
     int size = img->width * img->height;
-    img->pixels = malloc(size * sizeof(BYTE));
+    img->pxArray = malloc(size * sizeof(BYTE));
 
     // Store pixel array
-    fread(img->pixels,
+    fread(img->pxArray,
           sizeof(BYTE),
           img->width * img->height,
           img->fileHandle);
@@ -99,7 +99,7 @@ void duplicate(BMP img)
     FILE *imgOut = fopen("out2.bmp", "wb");
     fwrite(img.header, sizeof(BYTE), HEADERSIZE, imgOut);
     fwrite(img.colorTable, sizeof(BYTE), pow(2, img.bitDepth), imgOut);
-    fwrite(img.pixels, sizeof(BYTE), img.width * img.height, imgOut);
+    fwrite(img.pxArray, sizeof(BYTE), img.width * img.height, imgOut);
 
     fclose(imgOut);
 }

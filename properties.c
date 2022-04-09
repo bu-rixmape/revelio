@@ -1,5 +1,5 @@
 /*  
- *  Filename:
+ *  fname:
  *      properties.c
  *  
  *  Purpose:
@@ -36,9 +36,9 @@ int main(void)
 {
     BMP image; // Define BMP variable for input file
 
-    char *fname;                                    // Define character pointer for filename
-    printf("%s", "Enter filename of input file: "); // Display user prompt
-    fgets(fname, FNAMELIMIT, stdin);                // Obtain filename of input file'
+    char *fname;                                    // Define character pointer for fname
+    printf("%s", "Enter fname of input file: "); // Display user prompt
+    fgets(fname, FNAMELIMIT, stdin);                // Obtain fname of input file'
     fname[strlen(fname) - 1] = 0;                   // Remove trailing whitespace
 
     image.fileHandle = fopen(fname, "r"); // Open input file

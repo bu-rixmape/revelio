@@ -35,8 +35,8 @@ int main(void)
     printf("depth: %d\n", bitDepth);
 
     // Read pixel array
-    unsigned char pixels[height * width];
-    fread(pixels, sizeof(unsigned char), (height * width), streamIn);
+    unsigned char pxArray[height * width];
+    fread(pxArray, sizeof(unsigned char), (height * width), streamIn);
 
     FILE *fo = fopen("out.bmp", "wb"); // Output File name
     fwrite(header, sizeof(unsigned char), 54, fo); // write the image header to output file
@@ -44,7 +44,7 @@ int main(void)
     if (bitDepth <= 8)
         fwrite(colorTable, sizeof(unsigned char), 1024, fo);
 
-    fwrite(pixels, sizeof(unsigned char), (height * width), fo);
+    fwrite(pxArray, sizeof(unsigned char), (height * width), fo);
 
     // Close input and output file
     fclose(fo);
