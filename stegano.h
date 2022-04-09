@@ -9,6 +9,7 @@
  *  Modifications:
  *      08 April 2022 - created
  *      09 April 2022 - modified function prototypes
+ *                    - added new data type name
  */
 
 #include <stdio.h>
@@ -16,23 +17,26 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define HEADER_SIZE 54
 #define CHANGE_VALUE 1
 
-typedef unsigned char BYTE;
+typedef unsigned char BYTE;  // 1 byte
+typedef unsigned int DWORD;  // 4 bytes
+typedef unsigned short WORD; // 2 bytes
+typedef int LONG;            // 4 bytes (signed)
 
 typedef struct
 {
     FILE *filePtr;
-    int dibHeaderSize;
-    int width;
-    int height;
-    int pxCount;
-    int bitDepth;
-    int colorCount;
-    BYTE header[HEADER_SIZE];
+    DWORD headerSize;
+    LONG width;
+    LONG height;
+    DWORD pxCount;
+    WORD bitDepth;
+    DWORD colorCount;
+    BYTE *header;
     BYTE *colorTable;
     BYTE *pxArray;
+    // BYTE *msgArray;
 } BMP;
 
 BMP *loadImage(char *fname);
@@ -42,6 +46,8 @@ void setProperties(BMP *imgPtr);
 void printProperties(BMP img);
 
 void encodeMessage(char *fname, BMP *imgPtr);
-FILE *openMessage(void);
+FILE *openMessage(char *fname, BMP *imgPtr);
 
 void saveNewImage(char *fname, BMP img);
+
+void decodeMessage(BMP origImg, BMP stegImg);
