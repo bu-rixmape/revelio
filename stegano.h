@@ -33,10 +33,11 @@ typedef struct
     DWORD pxCount;
     WORD bitDepth;
     DWORD colorCount;
+    DWORD pxArraySize;
+    DWORD padding;
     BYTE *header;
     BYTE *colorTable;
     BYTE *pxArray;
-    // BYTE *msgArray;
 } BMP;
 
 BMP *loadImage(char *fname);

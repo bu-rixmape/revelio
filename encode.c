@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 
     // printf("i: %s\no: %s\nm: %s\n", input, output, message);
 
-    char *input = "sources\\img001.bmp";
+    char *input = "130x200.bmp";
     char *output = "new.bmp";
     char *txt = "message.txt";
 
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 
     encodeMessage(txt, imagePtr);
 
-    // saveNewImage(output, *imagePtr); // Create new image
+    saveNewImage(output, *imagePtr); // Create new image
 
     freeImage(imagePtr); // Close input image
 }
