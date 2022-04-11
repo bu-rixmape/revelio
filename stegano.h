@@ -16,8 +16,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <unistd.h>
+#include <limits.h>
 
+#define FNAME_LIMIT 100
 #define CHANGE_VALUE 1
+#define FILEHEADER_SIZE 14
 
 typedef unsigned char BYTE;  // 1 byte
 typedef unsigned int DWORD;  // 4 bytes
@@ -41,14 +45,12 @@ typedef struct
 } BMP;
 
 BMP *loadImage(char *fname);
-void freeImage(BMP *imgPtr);
-
 void setProperties(BMP *imgPtr);
 void printProperties(BMP img);
 
 void encodeMessage(char *fname, BMP *imgPtr);
 FILE *openMessage(char *fname, BMP *imgPtr);
 
-void saveNewImage(char *fname, BMP img);
-
+void createStego(char *fname, BMP img);
+void freeImage(BMP *imgPtr);
 void decodeMessage(BMP origImg, BMP stegImg);

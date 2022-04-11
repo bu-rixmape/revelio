@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <limits.h>
 
 int main(int argc, char **argv)
 {
@@ -14,4 +15,6 @@ int main(int argc, char **argv)
 
     printf("short: %zu bytes\n", sizeof(short));
     printf("unsigned short: %zu bytes\n\n", sizeof(unsigned short));
+
+    printf("CHAR_BIT: %d bits\n", CHAR_BIT);
 }

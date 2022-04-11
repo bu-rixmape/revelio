@@ -67,7 +67,7 @@ void setProperties(BMP *img)
           img->fileHandle);
 
     // Initialize the structure members of the pointed BMP variable
-    img->width = *(int *)&img->header[18];
+    memcpy(&img->width, &img->header[18], 4);
     img->height = *(int *)&img->header[22];
     img->bitDepth = *(int *)&img->header[28];
 

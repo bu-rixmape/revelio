@@ -3,64 +3,76 @@
  *      encode.c
  *
  *  Purpose:
- *      To demonstrate encoding of message into an image.
+ *      To create an steganographic image by encoding secret message
+ *      into a cover image.
  *
  *  Modifications:
  *      07 April 2022 - created
  *      08 April 2022 - added stegano.h header
  *                    - file renamed from pixel_array.c to encode.c
- *      09 April 2022 - commented option parsing
+ *      09 April 2022 - added argument parsing
+ *      10 April 2022 - modified argument parsing
  */
 
 #include "stegano.h"
 
 int main(int argc, char **argv)
 {
-    // // Exit program if required arguments were not provided
-    // if (argc == 5 && argv[1] == "-i" && argv[3] == "-m")
-    // {
-    //     fprintf(stderr, "%s", "Required arguments not provided.");
-    //     exit(1);
-    // }
+    char *input = NULL;   // Filename of cover image
+    char *message = NULL; // Filename of secret message
+    char *output = NULL;  // Filename of stego image
 
-    // // Obtain required arguments
-    // // TODO: Check if filenames are valid
-    // char *input = argv[2];   // Filename of input image
-    // char *message = argv[4]; // Filename of text message
+    int option; // Next option argument in the argument list
 
-    // // Initialize values for optional arguments
-    // char output[100] = "new.bmp";
+    // Parses command line arguments
+    while ((option = getopt(argc, argv, ":i:m:o:")) != -1)
+    {
+        switch (option)
+        {
+        case 'i':
+            input = optarg; // Filename of cover image
+            break;
 
-    // // Obtain optional arguments, if they are provided
-    // if (argc > 5)
-    // {
-    //     for (size_t i = 5; i < argc; i += 2)
-    //     {
-    //         char option = *(argv[i] + 1); // Obtain option mode
+        case 'm':
+            message = optarg; // Filename of secret message
+            break;
 
-    //         switch (option)
-    //         {
-    //             case 'o':
-    //                 strncpy(output, argv[i + 1], 100 - 1);
-    //                 break;
+        case 'o':
+            output = optarg; // Filename of stego image
+            break;
 
-    //             // Add other options here in the future
-    //         }
-    //     }
-    // }
+        case ':': // Required option with missing option argument
+            printf("missing '%c' command line argument\n", optopt);
+            break;
 
-    // printf("i: %s\no: %s\nm: %s\n", input, output, message);
+        case '?': // Unknown option character
+            printf("unknown '%c' option character\n", optopt);
+            break;
+        }
+    }
 
-    char *input = "130x200.bmp";
-    char *output = "new.bmp";
-    char *txt = "message.txt";
+    // Check if required option arguments are obtained
+    if (input == NULL)
+    {
+        fprintf(stderr, "%s", "no cover image provided in main()\n");
+        exit(1);
+    }
 
-    BMP *imagePtr = loadImage(input); // Open input image
-    printProperties(*imagePtr);     // Display image properties
+    if (message == NULL)
+    {
+        fprintf(stderr, "%s", "no secret message provided in main()\n");
+        exit(1);
+    }
 
-    encodeMessage(txt, imagePtr);
+    if (output == NULL)
+    {
+        output = "stegoImage.bmp"; // Default filename of stego image
+    }
 
-    saveNewImage(output, *imagePtr); // Create new image
+    BMP *imagePtr = loadImage(input); // Open cover image
+    printProperties(*imagePtr);       // Display image properties
 
-    freeImage(imagePtr); // Close input image
+    encodeMessage(message, imagePtr); // Hide secret message
+    createStego(output, *imagePtr);  // Create new image
+    freeImage(imagePtr);              // Close cover image
 }
