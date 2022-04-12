@@ -29,14 +29,14 @@ typedef struct
     int bitDepth;
 } BMP;
 
-void setProperties(BMP *image);
+void storeProperties(BMP *image);
 void showProperties(BMP image);
 
 int main(void)
 {
     BMP image; // Define BMP variable for input file
 
-    char *fname;                                    // Define character pointer for fname
+    const char *fname;                                    // Define character pointer for fname
     printf("%s", "Enter fname of input file: "); // Display user prompt
     fgets(fname, FNAMELIMIT, stdin);                // Obtain fname of input file'
     fname[strlen(fname) - 1] = 0;                   // Remove trailing whitespace
@@ -52,13 +52,13 @@ int main(void)
 
     BMP *imagePtr = &image; // Initialize BMP pointer for input file
     
-    setProperties(imagePtr);
+    storeProperties(imagePtr);
     showProperties(image);
 
     fclose(image.fileHandle);
 }
 
-void setProperties(BMP *img)
+void storeProperties(BMP *img)
 {
     // Store content of the image header
     fread(img->header,

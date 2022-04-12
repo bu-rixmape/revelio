@@ -3,7 +3,7 @@
  *      encode.c
  *
  *  Purpose:
- *      To create an steganographic image by encoding secret message
+ *      To create an steganographic image by encoding secret text
  *      into a cover image.
  *
  *  Modifications:
@@ -18,27 +18,27 @@
 
 int main(int argc, char **argv)
 {
-    char *input = NULL;   // Filename of cover image
+    char *cover = NULL;   // Filename of cover image
     char *message = NULL; // Filename of secret message
-    char *output = NULL;  // Filename of stego image
+    char *stego = NULL;   // Filename of stego image
 
     int option; // Next option argument in the argument list
 
     // Parses command line arguments
-    while ((option = getopt(argc, argv, ":i:m:o:")) != -1)
+    while ((option = getopt(argc, argv, ":c:s:m:")) != -1)
     {
         switch (option)
         {
-        case 'i':
-            input = optarg; // Filename of cover image
+        case 'c':
+            cover = optarg; // Filename of cover image
+            break;
+
+        case 's':
+            stego = optarg; // Filename of stego image
             break;
 
         case 'm':
             message = optarg; // Filename of secret message
-            break;
-
-        case 'o':
-            output = optarg; // Filename of stego image
             break;
 
         case ':': // Required option with missing option argument
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
     }
 
     // Check if required option arguments are obtained
-    if (input == NULL)
+    if (cover == NULL)
     {
         fprintf(stderr, "%s", "no cover image provided in main()\n");
         exit(1);
@@ -64,15 +64,13 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    if (output == NULL)
+    if (stego == NULL)
     {
-        output = "stegoImage.bmp"; // Default filename of stego image
+        stego = "stegoImage.bmp"; // Default filename for stego image
     }
 
-    BMP *imagePtr = loadImage(input); // Open cover image
-    printProperties(*imagePtr);       // Display image properties
-
-    encodeMessage(message, imagePtr); // Hide secret message
-    createStego(output, *imagePtr);  // Create new image
-    freeImage(imagePtr);              // Close cover image
+    BMP *imagePtr = loadImage(cover); // Creates BMP structure for cover image
+    encodeText(message, imagePtr);    // Hides secret message
+    createStego(stego, *imagePtr);    // Creates new file for stego image
+    freeImage(imagePtr);              // Closes cover image
 }

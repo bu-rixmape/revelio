@@ -13,11 +13,12 @@
  */
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <limits.h>
+#include <string.h>
+#include <ctype.h>
 #include <math.h>
 #include <unistd.h>
-#include <limits.h>
 
 #define FNAME_LIMIT 100
 #define CHANGE_VALUE 1
@@ -31,26 +32,29 @@ typedef int LONG;            // 4 bytes (signed)
 typedef struct
 {
     FILE *filePtr;
+
     DWORD headerSize;
     LONG width;
     LONG height;
-    DWORD pxCount;
     WORD bitDepth;
     DWORD colorCount;
-    DWORD pxArraySize;
+    DWORD pxArrSize;
     DWORD padding;
+
     BYTE *header;
-    BYTE *colorTable;
-    BYTE *pxArray;
+    DWORD *colorTable;
+    BYTE *pxArr;
+    BYTE *pxArrMod;
 } BMP;
 
-BMP *loadImage(char *fname);
-void setProperties(BMP *imgPtr);
+BMP *loadImage(const char *fname);
+void storeProperties(BMP *imgPtr);
 void printProperties(BMP img);
 
-void encodeMessage(char *fname, BMP *imgPtr);
-FILE *openMessage(char *fname, BMP *imgPtr);
+void encodeText(const char *fname, BMP *imgPtr);
+FILE *openText(const char *fname, BMP img);
 
-void createStego(char *fname, BMP img);
+void createStego(const char *fname, BMP img);
 void freeImage(BMP *imgPtr);
-void decodeMessage(BMP origImg, BMP stegImg);
+
+void decodeText(BMP origImg, BMP stegImg, const char *fname);

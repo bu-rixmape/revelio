@@ -9,135 +9,170 @@
  *  Modifications:
  *      08 April 2022 - created
  *      09 April 2022 - modified identifiers and functions
- *      10 April 2022 - modified encodeMessage() to skip padding
+ *      10 April 2022 - modified encodeText() to skip padding
  *      11 April 2022 - used memcpy() in obtaining image properties
+ *      12 April 2022 - modified decodeText() to write file for secret message
  */
 
 #include "stegano.h"
 
-// Loads an image indicated by fname into memory. Returns pointer to
+// Opens a bitmap image indicated by fname. Returns pointer to
 // BMP structure of the image.
-BMP *loadImage(char *fname)
+BMP *loadImage(const char *fname)
 {
-    BMP *imgPtr = malloc(sizeof(BMP));   // Allocate memory for cover image
-    imgPtr->filePtr = fopen(fname, "r"); // Open cover image
+    // Terminates program if image file format is not bitmap
+    const char *dot = strrchr(fname, '.');
+    if (strcmp(dot, ".bmp"))
+    {
+        fprintf(stderr,
+                "image %s in loadImage() is not a bitmap file\n",
+                fname);
+        exit(1);
+    }
 
-    // Exit program if opening the image failed
+    BMP *imgPtr = malloc(sizeof(BMP));   // Allocates memory for image
+    imgPtr->filePtr = fopen(fname, "r"); // Opens image
+
+    // Terminates program if opening the image failed
     if (imgPtr->filePtr == NULL)
     {
         fprintf(stderr,
-                "error opening input file %s in function loadImage()\n",
+                "error opening image %s in loadImage()\n",
                 imgPtr->filePtr);
         free(imgPtr); // Free allocated memory for cover image
         exit(1);
     }
 
-    setProperties(imgPtr);
+    storeProperties(imgPtr); // Initialize structure members
     return imgPtr;
 }
 
-// Initializes structure members of the pointed BMP structure.
-void setProperties(BMP *imgPtr)
+// Stores properties of the image represented by the BMP structure
+// pointed to by imgPtr. Returns none.
+void storeProperties(BMP *imgPtr)
 {
-    // Obtains DIB header size
+    // Obtains DIB header size measured in bytes
     fseek(imgPtr->filePtr, FILEHEADER_SIZE, SEEK_SET);
-    fread(&(imgPtr->headerSize), sizeof(DWORD), 1, imgPtr->filePtr);
+    fread(&imgPtr->headerSize, sizeof(imgPtr->headerSize), 1, imgPtr->filePtr);
 
-    imgPtr->headerSize += FILEHEADER_SIZE; // Total size of image header
+    // Sets total size of image header measured in bytes
+    imgPtr->headerSize += FILEHEADER_SIZE;
 
-    // Allocate memory for image header
-    imgPtr->header = malloc(imgPtr->headerSize * sizeof(BYTE));
+    // Allocates memory for image header
+    imgPtr->header = malloc(imgPtr->headerSize);
 
-    // Obtain content of the image header
-    fseek(imgPtr->filePtr, 0, SEEK_SET);
-    fread(imgPtr->header, sizeof(BYTE), imgPtr->headerSize, imgPtr->filePtr);
+    // Obtains content of image header
+    rewind(imgPtr->filePtr);
+    fread(imgPtr->header, sizeof(*imgPtr->header),
+          imgPtr->headerSize, imgPtr->filePtr);
 
-    memcpy(&imgPtr->width, &imgPtr->header[18], sizeof(DWORD));  // Bitmap width in pixels
-    memcpy(&imgPtr->height, &imgPtr->header[22], sizeof(DWORD)); // Bitmap height in pixels
-    imgPtr->pxCount = imgPtr->width * imgPtr->height;            // Number of visible pixels
+    // Obtains color depth measured in bits
+    memcpy(&imgPtr->bitDepth, &imgPtr->header[28], sizeof(imgPtr->bitDepth));
 
-    memcpy(&imgPtr->bitDepth, &imgPtr->header[28], sizeof(DWORD)); // Color depth of image
-    imgPtr->colorCount = pow(2, imgPtr->bitDepth);                 // Entries in color pallete
+    // Computes total number of entries in color pallete
+    imgPtr->colorCount = pow(2, imgPtr->bitDepth);
 
-    if (imgPtr->bitDepth >= 8) // Check if color table exists
+    if (imgPtr->bitDepth >= 8) // Checks if color table exists
     {
-        // Allocate the size of array for color table
-        imgPtr->colorTable = malloc(imgPtr->colorCount * sizeof(BYTE));
+        // Allocates memory for color table
+        imgPtr->colorTable = malloc(imgPtr->colorCount *
+                                    sizeof(*imgPtr->colorTable));
 
-        // Obtain color table
-        fread(imgPtr->colorTable, sizeof(BYTE),
+        // Note: sizeof(*imgPtr->colorTable) evaluates to the size (in bytes)
+        // of the data type being pointed to by imgPtr->colorTable.
+
+        // Obtains color table
+        fread(imgPtr->colorTable, sizeof(*imgPtr->colorTable),
               imgPtr->colorCount, imgPtr->filePtr);
     }
 
-    // Determines size of entire pixel array in bytes
+    // Obtains image width and height measured in pixels
+    memcpy(&imgPtr->width, &imgPtr->header[18], sizeof(imgPtr->width));
+    memcpy(&imgPtr->height, &imgPtr->header[22], sizeof(imgPtr->height));
+
+    // Computes size of pixel array measured in bytes
     DWORD pxRowSize = ceil((float)(imgPtr->bitDepth * imgPtr->width) / 32) * 4;
-    DWORD pxArraySize = pxRowSize * imgPtr->height;
-    imgPtr->pxArraySize = pxArraySize;
+    imgPtr->pxArrSize = (pxRowSize * imgPtr->height);
 
-    // Allocate the size of pixel array
-    imgPtr->pxArray = malloc(pxArraySize * sizeof(BYTE));
+    // Obtains pixel array
+    imgPtr->pxArr = malloc(imgPtr->pxArrSize);
+    fread(imgPtr->pxArr, sizeof(*imgPtr->pxArr),
+          imgPtr->pxArrSize, imgPtr->filePtr);
 
-    // Obtain pixel array
-    fread(imgPtr->pxArray, sizeof(BYTE), pxArraySize, imgPtr->filePtr);
+    // Creates copy of pixel array to be used for encoding secret text
+    imgPtr->pxArrMod = malloc(imgPtr->pxArrSize);
+    memcpy(imgPtr->pxArrMod, imgPtr->pxArr, imgPtr->pxArrSize);
 
-    imgPtr->padding = pxRowSize - imgPtr->width; // Padding in pixel array
+    // Computes padding in pixel array
+    imgPtr->padding = pxRowSize - imgPtr->width;
 }
 
-// Prints image properties of cover image.
+// Prints image properties of BMP structure img. Returns none.
 void printProperties(BMP img)
 {
     puts("IMAGE PROPERTIES");
     printf("%-14s: %d bytes\n", "Header size", img.headerSize);
     printf("%-14s: %d pixels\n", "Image width", img.width);
     printf("%-14s: %d pixels\n", "Image height", img.height);
-    printf("%-14s: %d pixels\n", "Pixel count", img.pxCount);
     printf("%-14s: %d bits\n", "Bit depth", img.bitDepth);
     printf("%-14s: %d colors\n", "Color count", img.colorCount);
-    printf("%-14s: %d bytes\n", "Pixel array", img.pxArraySize);
+    printf("%-14s: %d bytes\n", "Pixel array", img.pxArrSize);
     printf("%-14s: %d byte\n", "Padding", img.padding);
 }
 
-// Creates stego image indicated by fname from the modified bitmap file
-// structure of cover image containing the secret message.
-void createStego(char *fname, BMP img)
+// Creates stego image indicated by fname. Uses the modified bitmap file
+// structure of cover image that contains the secret text. Returns None.
+void createStego(const char *fname, BMP img)
 {
-    FILE *imgOut = fopen(fname, "wb");
+    // Terminates program if image file format is not bitmap
+    const char *dot = strrchr(fname, '.');
+    if (strcmp(dot, ".bmp"))
+    {
+        fprintf(stderr,
+                "image %s in loadImage() is not a bitmap file\n",
+                fname);
+        exit(1);
+    }
 
-    // Writes the bitmap file structure into the stegoImg
-    fwrite(img.header, sizeof(BYTE), img.headerSize, imgOut);
-    fwrite(img.colorTable, sizeof(BYTE), img.colorCount, imgOut);
-    fwrite(img.pxArray, sizeof(BYTE), img.pxCount, imgOut);
+    FILE *imgOut = fopen(fname, "wb"); // Opens stego image
+
+    // Writes the bitmap file structure into the stego image
+    fwrite(img.header, sizeof(*img.header), img.headerSize, imgOut);
+    fwrite(img.colorTable, sizeof(*img.colorTable), img.colorCount, imgOut);
+    fwrite(img.pxArrMod, sizeof(*img.pxArrMod), img.pxArrSize, imgOut);
 
     fclose(imgOut);
 }
 
-// Frees the memory allocated to BMP structure pointed to by imgPtr.
+// Frees memory allocated for BMP structure pointed to by imgPtr. Returns none.
 void freeImage(BMP *imgPtr)
 {
     // Deallocates the space previously allocated by malloc().
     free(imgPtr->header);
-    free(imgPtr->colorTable);
-    free(imgPtr->pxArray);
+    free(imgPtr->colorTable); // conditional
+    free(imgPtr->pxArr);
+    free(imgPtr->pxArrMod);
 
     fclose(imgPtr->filePtr); // Closes the file pointer of the cover image
     free(imgPtr);            // Frees the memory allocated to the BMP structure
 }
 
-// Encodes secret message indicated by fname into the BMP structure pointed
-// to by imgPtr.
-void encodeMessage(char *fname, BMP *imgPtr)
+// Encodes secret text indicated by fname into the BMP structure pointed
+// to by imgPtr. Returns none.
+void encodeText(const char *fname, BMP *imgPtr)
 {
-    FILE *msgPtr = openMessage(fname, imgPtr);
+    FILE *textPtr = openText(fname, *imgPtr);
 
     int px = 0; // Counter for pixels
 
     // Index of last pixel in first row of pixel array
     int lastPx = imgPtr->width - 1;
 
-    // Loops through each character in secret message
-    while (!feof(msgPtr))
+    // Loops through each character in secret text
+    while (!feof(textPtr))
     {
-        char character = getc(msgPtr);   // Obtains character
+        char character = getc(textPtr); // Obtains character
+
         char mask = 1 << (CHAR_BIT - 1); // Bit mask for 8-bit character
 
         // Loop through each binary digit of the 8-bit character
@@ -147,27 +182,27 @@ void encodeMessage(char *fname, BMP *imgPtr)
             if (character & mask) // Bit is 1
             {
                 // Increases pixel value by CHANGE_VALUE
-                imgPtr->pxArray[px] += CHANGE_VALUE;
+                imgPtr->pxArrMod[px] += CHANGE_VALUE;
 
                 // Set higher limit for pixel value according to color depth
                 int maxPxValue = imgPtr->colorCount - 1;
-                if (imgPtr->pxArray[px] > maxPxValue)
+                if (imgPtr->pxArrMod[px] > maxPxValue)
                 {
-                    imgPtr->pxArray[px] = maxPxValue;
+                    imgPtr->pxArrMod[px] = maxPxValue;
                 }
             }
             else // Bit is 0
             {
                 // Avoids negative pixel value
-                if (imgPtr->pxArray[px] < CHANGE_VALUE)
+                if (imgPtr->pxArrMod[px] < CHANGE_VALUE)
                 {
                     // Sets lower limit for pixel value to 0
-                    imgPtr->pxArray[px] = 0;
+                    imgPtr->pxArrMod[px] = 0;
                 }
                 else
                 {
                     // Decreases pixel value by CHANGE_VALUE
-                    imgPtr->pxArray[px] -= CHANGE_VALUE;
+                    imgPtr->pxArrMod[px] -= CHANGE_VALUE;
                 }
             }
 
@@ -189,59 +224,84 @@ void encodeMessage(char *fname, BMP *imgPtr)
     }
 }
 
-// Opens secret message indicated by fname.
-FILE *openMessage(char *fname, BMP *imgPtr)
+// Opens secret text indicated by fname. Returns file pointer for secret text.
+FILE *openText(const char *fname, BMP img)
 {
     FILE *filePtr = fopen(fname, "r"); // Open input file
 
-    // Exit program if opening file failed
+    // Terminates program if opening file failed
     if (filePtr == NULL)
     {
         fprintf(stderr,
-                "error opening secret message %s in encodeMessage()\n",
+                "error opening secret text %s in openText()\n",
                 fname);
         exit(1);
     }
 
-    // Count character in secret message
+    // Counts character in secret text
     unsigned int charCount = 0;
     while (!feof(filePtr))
     {
         char character = getc(filePtr); // Obtain character
+
+        // Terminates program if character is not representable with 8 bits
+        if (character >= pow(2, CHAR_BIT))
+        {
+            fprintf(stderr,
+                    "secret text %s contains invalid character\n",
+                    fname);
+            exit(1);
+        }
+
         charCount++;
     }
-    fseek(filePtr, 0, SEEK_SET);
+    rewind(filePtr); // Sets file pointer at the beginning of file stream
 
-    // Each pixel in the image represents a binary digit from the
-    // 8-bit (1 byte) character in the secret message.
+    // Computes number of pixels needed to represent a binary digit
+    // of each 8-bit (1 byte) character in secret text
     unsigned int pxNeed = charCount * 8;
 
-    // Check if secret message can fit in the image
-    if (pxNeed > imgPtr->pxCount)
+    // Computes total number of pixels used by the image
+    DWORD pxTotal = img.width * img.height;
+
+    // Terminates program if secret text cannot fit in cover image
+    if (pxNeed > pxTotal)
     {
         fprintf(stderr,
-                "Secret message %s has too many characters\n"
+                "secret text %s has too many characters\n"
                 "%u pixels is needed but cover image only has %u pixels.\n",
-                fname, pxNeed, imgPtr->pxCount);
+                fname, pxNeed, pxTotal);
         exit(1);
     }
 
     return filePtr;
 }
 
-// Decodes stego image stegImg based from cover image origImg.
-void decodeMessage(BMP origImg, BMP stegImg)
+// Writes secret text into file indicated by fname based from stego image
+// stegImg and cover image origImg. Returns none.
+void decodeText(BMP origImg, BMP stegImg, const char *fname)
 {
-    if (origImg.pxArraySize != stegImg.pxArraySize)
+    // Checks if pixel array for cover image and stego image are the same
+    if (origImg.pxArrSize != stegImg.pxArrSize)
     {
         fprintf(stderr,
                 "%s",
-                "pixel array for cover and stego images are different");
+                "cover image and stego images are different");
         exit(1);
     }
 
-    // Allocate memory for array of pixel value differences
-    int *diffs = malloc(stegImg.pxArraySize * sizeof(int));
+    FILE *text = fopen(fname, "w"); // Opens file for secret text
+
+    // Terminates program if temporary file could not be created
+    if (text == NULL)
+    {
+        fprintf(stderr, "%s",
+                "temporary file could not be created in decodeText()\n");
+        exit(1);
+    }
+
+    // Allocates memory for array of pixel value differences
+    int *diffs = malloc(stegImg.pxArrSize * sizeof(*diffs));
 
     // Initializes the index of last pixel in first row of pixel array
     int lastPx = stegImg.width - 1;
@@ -250,11 +310,11 @@ void decodeMessage(BMP origImg, BMP stegImg)
     int character = 0; // ASCII decimal value of decoded character
 
     // Loop through each pixel in pixel Array
-    for (size_t px = 0; px < stegImg.pxArraySize; px++)
+    for (size_t px = 0; px < stegImg.pxArrSize; px++)
     {
         // Compute the change between values of corresponding
         // pixel in cover and stego image
-        int diff = stegImg.pxArray[px] - origImg.pxArray[px];
+        int diff = stegImg.pxArr[px] - origImg.pxArr[px];
 
         // Dettermines the bit value represented by the change
         if (diff >= CHANGE_VALUE) // Negative change
@@ -282,19 +342,21 @@ void decodeMessage(BMP origImg, BMP stegImg)
                 break;
             }
 
-            printf("%c", character); // Display character
-            bitChar = 0;             // Reset counter for decoded bit
-            character = 0;           // Reset ASCII value for next character
+            fputc(character, text); // Display character
+            bitChar = 0;           // Reset counter for decoded bit
+            character = 0;         // Reset ASCII value for next character
         }
 
         // Skip padding in pixel array
         if (px == lastPx)
         {
-            px += stegImg.padding; // Index of next pixel in next row
-            // Index of the last pixel in next row
+            px += stegImg.padding; // Index of first pixel in next row
+
+            // Index of last pixel in next row
             lastPx += stegImg.width + stegImg.padding;
         }
     }
 
     free(diffs);
+    fclose(text);
 }
