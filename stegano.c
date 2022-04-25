@@ -1,5 +1,5 @@
 /*
- *  fname:
+ *  Filename:
  *      stegano.c
  *
  *  Purpose:
@@ -16,21 +16,75 @@
 
 #include "stegano.h"
 
+// void parseArgs(void)
+// {
+//     char *cover = NULL;   // Filename of cover image
+//     char *message = NULL; // Filename of secret message
+//     char *stego = NULL;   // Filename of stego image
+
+//     int option; // Next option argument in the argument list
+
+//     // Parses command line arguments
+//     while ((option = getopt(argc, argv, ":c:s:m:")) != -1)
+//     {
+//         switch (option)
+//         {
+//         case 'c':
+//             cover = optarg; // Filename of cover image
+//             break;
+
+//         case 's':
+//             stego = optarg; // Filename of stego image
+//             break;
+
+//         case 'm':
+//             message = optarg; // Filename of secret message
+//             break;
+
+//         case ':': // Required option with missing option argument
+//             printf("missing '%c' command line argument\n", optopt);
+//             break;
+
+//         case '?': // Unknown option character
+//             printf("unknown '%c' option character\n", optopt);
+//             break;
+//         }
+//     }
+
+//     // Check if required option arguments are obtained
+//     if (cover == NULL)
+//     {
+//         fprintf(stderr, "%s", "no cover image provided in main()\n");
+//         exit(1);
+//     }
+
+//     if (message == NULL)
+//     {
+//         fprintf(stderr, "%s", "no secret message provided in main()\n");
+//         exit(1);
+//     }
+
+//     if (stego == NULL)
+//     {
+//         stego = "stegoImage.bmp"; // Default filename for stego image
+//     }
+// }
+
 // Opens a bitmap image indicated by fname. Returns pointer to
 // BMP structure of the image.
 BMP *loadImage(const char *fname)
 {
     // Terminates program if image file format is not bitmap
-    const char *dot = strrchr(fname, '.');
-    if (strcmp(dot, ".bmp"))
+    const char *extension = strrchr(fname, '.');
+    if (strcmp(extension, ".bmp"))
     {
         fprintf(stderr,
-                "image %s in loadImage() is not a bitmap file\n",
+                "image %s is not a bitmap file in loadImage()\n",
                 fname);
         exit(1);
     }
 
-    BMP *imgPtr = malloc(sizeof(BMP));   // Allocates memory for image
+    BMP *imgPtr = malloc(sizeof(BMP));   // Allocates memory for cover image
     imgPtr->filePtr = fopen(fname, "r"); // Opens image
 
     // Terminates program if opening the image failed
@@ -94,8 +148,16 @@ void storeProperties(BMP *imgPtr)
     DWORD pxRowSize = ceil((float)(imgPtr->bitDepth * imgPtr->width) / 32) * 4;
     imgPtr->pxArrSize = (pxRowSize * imgPtr->height);
 
-    // Obtains pixel array
+    // Allocates memory for pixel array
     imgPtr->pxArr = malloc(imgPtr->pxArrSize);
+
+    // Obtains file offset of pixel array
+    fseek(imgPtr->filePtr, 10, SEEK_SET);
+    DWORD pxArrOffset;
+    fread(&pxArrOffset, sizeof(pxArrOffset), 1, imgPtr->filePtr);
+
+    // Obtains content of pixel array
+    fseek(imgPtr->filePtr, pxArrOffset, SEEK_SET);
     fread(imgPtr->pxArr, sizeof(*imgPtr->pxArr),
           imgPtr->pxArrSize, imgPtr->filePtr);
 
@@ -129,14 +191,14 @@ void createStego(const char *fname, BMP img)
     if (strcmp(dot, ".bmp"))
     {
         fprintf(stderr,
-                "image %s in loadImage() is not a bitmap file\n",
+                "image %s is not a bitmap file in createStego()\n",
                 fname);
         exit(1);
     }
 
     FILE *imgOut = fopen(fname, "wb"); // Opens stego image
 
-    // Writes the bitmap file structure into the stego image
+    // Writes the modified bitmap file structure into the stego image
     fwrite(img.header, sizeof(*img.header), img.headerSize, imgOut);
     fwrite(img.colorTable, sizeof(*img.colorTable), img.colorCount, imgOut);
     fwrite(img.pxArrMod, sizeof(*img.pxArrMod), img.pxArrSize, imgOut);
@@ -147,14 +209,18 @@ void createStego(const char *fname, BMP img)
 // Frees memory allocated for BMP structure pointed to by imgPtr. Returns none.
 void freeImage(BMP *imgPtr)
 {
-    // Deallocates the space previously allocated by malloc().
+    // Deallocates the space previously allocated by malloc()
     free(imgPtr->header);
-    free(imgPtr->colorTable); // conditional
     free(imgPtr->pxArr);
     free(imgPtr->pxArrMod);
 
-    fclose(imgPtr->filePtr); // Closes the file pointer of the cover image
-    free(imgPtr);            // Frees the memory allocated to the BMP structure
+    if (imgPtr->colorTable != NULL) // Checks if color table exists
+    {
+        free(imgPtr->colorTable);
+    }
+
+    fclose(imgPtr->filePtr); // Closes the file pointer for cover image
+    free(imgPtr);            // Deallocates memory for BMP structure
 }
 
 // Encodes secret text indicated by fname into the BMP structure pointed
@@ -172,6 +238,14 @@ void encodeText(const char *fname, BMP *imgPtr)
     while (!feof(textPtr))
     {
         char character = getc(textPtr); // Obtains character
+
+        if (character > ASCII_MAX)
+        {
+            fprintf(stderr,
+                    "character %c is not in ASCII character set\n",
+                    character);
+            exit(1);
+        }
 
         char mask = 1 << (CHAR_BIT - 1); // Bit mask for 8-bit character
 
@@ -286,17 +360,17 @@ void decodeText(BMP origImg, BMP stegImg, const char *fname)
     {
         fprintf(stderr,
                 "%s",
-                "cover image and stego images are different");
+                "different cover image and stego image in decodeText()\n");
         exit(1);
     }
 
     FILE *text = fopen(fname, "w"); // Opens file for secret text
 
-    // Terminates program if temporary file could not be created
+    // Terminates program if file could not be created
     if (text == NULL)
     {
         fprintf(stderr, "%s",
-                "temporary file could not be created in decodeText()\n");
+                "secret text could not be created in decodeText()\n");
         exit(1);
     }
 
@@ -306,8 +380,8 @@ void decodeText(BMP origImg, BMP stegImg, const char *fname)
     // Initializes the index of last pixel in first row of pixel array
     int lastPx = stegImg.width - 1;
 
-    int bitChar = 0;   // Counter for decoded bit of 8-bit character
-    int character = 0; // ASCII decimal value of decoded character
+    int decodedBit = 0; // Counter for decoded bit of 8-bit character
+    int character = 0;  // ASCII decimal value of decoded character
 
     // Loop through each pixel in pixel Array
     for (size_t px = 0; px < stegImg.pxArrSize; px++)
@@ -329,22 +403,22 @@ void decodeText(BMP origImg, BMP stegImg, const char *fname)
             diffs[px] = 0;
         }
 
-        // Update ASCII value of current character
-        character += pow(2, 8 - (bitChar + 1)) * diffs[px];
-        bitChar++; // Increment number of decoded bit for current character
+        // Updates value of current character
+        character += pow(2, 8 - (decodedBit + 1)) * diffs[px];
+        decodedBit++; // Increments number of decoded bit for current character
 
-        // Check if a character is fully decoded
-        if (bitChar != 0 && bitChar % CHAR_BIT == 0)
+        // Checks if current character is fully decoded
+        if ((decodedBit != 0) && (decodedBit % CHAR_BIT == 0))
         {
-            // Terminate loop if last character is reached
-            if (character == 0)
+            // Stops decoding until non-ASCII character
+            if (character < ASCII_MIN && character > ASCII_MAX)
             {
                 break;
             }
 
             fputc(character, text); // Display character
-            bitChar = 0;           // Reset counter for decoded bit
-            character = 0;         // Reset ASCII value for next character
+            decodedBit = 0;         // Reset counter for decoded bit
+            character = 0;          // Reset ASCII value for next character
         }
 
         // Skip padding in pixel array

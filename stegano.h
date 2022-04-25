@@ -1,5 +1,5 @@
 /*
- *  fname:
+ *  Filename:
  *      stegano.h
  *
  *  Purpose:
@@ -19,33 +19,37 @@
 #include <ctype.h>
 #include <math.h>
 #include <unistd.h>
+#include <wchar.h>
 
-#define FNAME_LIMIT 100
-#define CHANGE_VALUE 1
 #define FILEHEADER_SIZE 14
+#define CHANGE_VALUE 1
+#define ASCII_MIN 0
+#define ASCII_MAX 127
 
 typedef unsigned char BYTE;  // 1 byte
 typedef unsigned int DWORD;  // 4 bytes
 typedef unsigned short WORD; // 2 bytes
-typedef int LONG;            // 4 bytes (signed)
+typedef int LONG;            // 4 bytes
 
-typedef struct
+struct bitmap
 {
-    FILE *filePtr;
+    FILE *filePtr;     // File pointer for the image
 
-    DWORD headerSize;
-    LONG width;
-    LONG height;
-    WORD bitDepth;
-    DWORD colorCount;
-    DWORD pxArrSize;
-    DWORD padding;
+    DWORD headerSize;  // Size of the image header in bytes
+    LONG width;        // Width of image in pixels
+    LONG height;       // Height of image in pixels
+    WORD bitDepth;     // Number of bits per pixel
+    DWORD colorCount;  // Number of colors in color pallete
+    DWORD pxArrSize;   // Size of pixel array in bytes
+    DWORD padding;     // Padding for pixel array in bytes
+    
+    BYTE *header;      // Content of image header
+    DWORD *colorTable; // Content of color table
+    BYTE *pxArr;       // Original pixel array
+    BYTE *pxArrMod;    // Modified pixel array
+};
 
-    BYTE *header;
-    DWORD *colorTable;
-    BYTE *pxArr;
-    BYTE *pxArrMod;
-} BMP;
+typedef struct bitmap BMP;
 
 BMP *loadImage(const char *fname);
 void storeProperties(BMP *imgPtr);

@@ -1,10 +1,10 @@
-/*  
+/*
  *  fname:
  *      properties.c
- *  
+ *
  *  Purpose:
  *      To display the properties of a BMP file.
- *  
+ *
  *  Modifications:
  *      07 April 2022 - created
  */
@@ -36,10 +36,10 @@ int main(void)
 {
     BMP image; // Define BMP variable for input file
 
-    const char *fname;                                    // Define character pointer for fname
+    const char *fname;                           // Define character pointer for fname
     printf("%s", "Enter fname of input file: "); // Display user prompt
-    fgets(fname, FNAMELIMIT, stdin);                // Obtain fname of input file'
-    fname[strlen(fname) - 1] = 0;                   // Remove trailing whitespace
+    fgets(fname, FNAMELIMIT, stdin);             // Obtain fname of input file'
+    fname[strlen(fname) - 1] = 0;                // Remove trailing whitespace
 
     image.fileHandle = fopen(fname, "r"); // Open input file
 
@@ -51,7 +51,7 @@ int main(void)
     }
 
     BMP *imagePtr = &image; // Initialize BMP pointer for input file
-    
+
     storeProperties(imagePtr);
     showProperties(image);
 

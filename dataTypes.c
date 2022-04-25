@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <limits.h>
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
     puts("SIZES OF INTEGER DATA TYPES");
     printf("int: %zu bytes\n", sizeof(int));
