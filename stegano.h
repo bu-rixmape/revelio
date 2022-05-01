@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <wchar.h>
 
+#define FNAME_MAX 100
 #define FILEHEADER_SIZE 14
 #define CHANGE_VALUE 1
 #define ASCII_MIN 0
@@ -31,7 +32,7 @@ typedef unsigned int DWORD;  // 4 bytes
 typedef unsigned short WORD; // 2 bytes
 typedef int LONG;            // 4 bytes
 
-struct bitmap
+struct bitmap          // Structure representing bitmap images
 {
     FILE *filePtr;     // File pointer for the image
 

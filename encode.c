@@ -16,14 +16,35 @@
 
 #include "stegano.h"
 
-int main(int argc, char *argv[])
+int main(void)
 {
-    char *cover = "assets\\rizal.bmp";        // Filename of cover image
-    char *message = "assets\\rizalbooks.txt"; // Filename of secret message
-    char *stego = "stegoRizal.bmp";           // Filename of stego image
+    // Displays program description
+    FILE *prompt = fopen("prompt.txt", "r");
+    char line[FNAME_MAX];
+    for (unsigned int i = 0; i < 12; i++)
+    {
+        fgets(line, FNAME_MAX, prompt);
+        printf("%s", line);
+    }
+    putchar('\n');
+
+    // Opens cover image
+    char cover[FNAME_MAX];
+    printf("|=^_^=| Input a cover Image (.bmp file format):");
+    scanf("%s", cover);
+
+    // Opens secret text
+    char secret[FNAME_MAX];
+    printf("|=0_0=| Input a Secret Text (.txt file format):");
+    scanf("%s", secret);
+
+    // Opens stego name
+    char stego[FNAME_MAX];
+    printf("|=*_*=| Input a Stego Image (.bmp file format):");
+    scanf("%s", stego);
 
     BMP *imagePtr = loadImage(cover); // Creates BMP structure for cover image
-    encodeText(message, imagePtr);    // Hides secret message
+    encodeText(secret, imagePtr);     // Hides secret message
     createStego(stego, *imagePtr);    // Creates new file for stego image
     freeImage(imagePtr);              // Closes cover image
 }

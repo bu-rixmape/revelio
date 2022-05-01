@@ -16,60 +16,6 @@
 
 #include "stegano.h"
 
-// void parseArgs(void)
-// {
-//     char *cover = NULL;   // Filename of cover image
-//     char *message = NULL; // Filename of secret message
-//     char *stego = NULL;   // Filename of stego image
-
-//     int option; // Next option argument in the argument list
-
-//     // Parses command line arguments
-//     while ((option = getopt(argc, argv, ":c:s:m:")) != -1)
-//     {
-//         switch (option)
-//         {
-//         case 'c':
-//             cover = optarg; // Filename of cover image
-//             break;
-
-//         case 's':
-//             stego = optarg; // Filename of stego image
-//             break;
-
-//         case 'm':
-//             message = optarg; // Filename of secret message
-//             break;
-
-//         case ':': // Required option with missing option argument
-//             printf("missing '%c' command line argument\n", optopt);
-//             break;
-
-//         case '?': // Unknown option character
-//             printf("unknown '%c' option character\n", optopt);
-//             break;
-//         }
-//     }
-
-//     // Check if required option arguments are obtained
-//     if (cover == NULL)
-//     {
-//         fprintf(stderr, "%s", "no cover image provided in main()\n");
-//         exit(1);
-//     }
-
-//     if (message == NULL)
-//     {
-//         fprintf(stderr, "%s", "no secret message provided in main()\n");
-//         exit(1);
-//     }
-
-//     if (stego == NULL)
-//     {
-//         stego = "stegoImage.bmp"; // Default filename for stego image
-//     }
-// }
-
 // Opens a bitmap image indicated by fname. Returns pointer to
 // BMP structure of the image.
 BMP *loadImage(const char *fname)
@@ -227,7 +173,7 @@ void freeImage(BMP *imgPtr)
 // to by imgPtr. Returns none.
 void encodeText(const char *fname, BMP *imgPtr)
 {
-    FILE *textPtr = openText(fname, *imgPtr);
+    FILE *textPtr = openText(fname, *imgPtr); // Opens secret text
 
     int px = 0; // Counter for pixels
 
@@ -296,6 +242,8 @@ void encodeText(const char *fname, BMP *imgPtr)
             character <<= 1; // Shift bits of character by 1 bit to the right
         }
     }
+
+    fclose(textPtr); // Closes secret text
 }
 
 // Opens secret text indicated by fname. Returns file pointer for secret text.
@@ -410,8 +358,8 @@ void decodeText(BMP origImg, BMP stegImg, const char *fname)
         // Checks if current character is fully decoded
         if ((decodedBit != 0) && (decodedBit % CHAR_BIT == 0))
         {
-            // Stops decoding until non-ASCII character
-            if (character < ASCII_MIN && character > ASCII_MAX)
+            // Stops decoding until null or non-ASCII character
+            if (character <= ASCII_MIN || character > ASCII_MAX)
             {
                 break;
             }
