@@ -16,31 +16,58 @@
 
 #include "stegano.h"
 
+void showBackground(const char *fname)
+{
+    printf("%s", "\033[H\033[J");  // Clears terminal screen
+    fflush(stdout);                // Flushes stdout's buffer
+    FILE *art = fopen(fname, "r"); // Opens text file containing ASCII art
+
+    // Terminates program if opening file failed
+    if (art == NULL)
+    {
+        fprintf(stderr,
+                "fopen() failed: %s could not be opened in showBackground()",
+                fname);
+        exit(EXIT_FAILURE); // Return control to operating system
+    }
+
+    int ch;                         // Next character in ASCII art
+    while ((ch = getc(art)) != EOF) // Obtains character in ASCII art until EOF
+    {
+        putchar(ch); // Displays character
+    }
+
+    fclose(art); // Closes text file containing ASCII art
+}
+
 // Opens a bitmap image indicated by fname. Returns pointer to
 // BMP structure of the image.
 BMP *loadImage(const char *fname)
 {
-    // Terminates program if image file format is not bitmap
-    const char *extension = strrchr(fname, '.');
+    void storeProperties(BMP * imgPtr); // Function prototype
+
+    const char *extension = strrchr(fname, '.'); // Obatins file extension
+
+    // Terminates program if file format is not bitmap
     if (strcmp(extension, ".bmp"))
     {
         fprintf(stderr,
-                "image %s is not a bitmap file in loadImage()\n",
+                "invalid file format: %s is not a bitmap file in loadImage()",
                 fname);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     BMP *imgPtr = malloc(sizeof(BMP));   // Allocates memory for cover image
-    imgPtr->filePtr = fopen(fname, "r"); // Opens image
+    imgPtr->filePtr = fopen(fname, "r"); // Opens image indicated by fname
 
     // Terminates program if opening the image failed
     if (imgPtr->filePtr == NULL)
     {
         fprintf(stderr,
-                "error opening image %s in loadImage()\n",
-                imgPtr->filePtr);
+                "fopen() failed: %s could not be opened in loadImage()",
+                fname);
         free(imgPtr); // Free allocated memory for cover image
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     storeProperties(imgPtr); // Initialize structure members
@@ -132,19 +159,20 @@ void printProperties(BMP img)
 // structure of cover image that contains the secret text. Returns None.
 void createStego(const char *fname, BMP img)
 {
-    // Terminates program if image file format is not bitmap
-    const char *dot = strrchr(fname, '.');
-    if (strcmp(dot, ".bmp"))
+    const char *extension = strrchr(fname, '.'); // Obatins file extension
+
+    // Terminates program if file format is not bitmap
+    if (strcmp(extension, ".bmp"))
     {
         fprintf(stderr,
-                "image %s is not a bitmap file in createStego()\n",
+                "invalid file format: %s is not a bitmap file in creatStego()",
                 fname);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     FILE *imgOut = fopen(fname, "wb"); // Opens stego image
 
-    // Writes the modified bitmap file structure into the stego image
+    // Uses the modified file structure of cover image to create stego image
     fwrite(img.header, sizeof(*img.header), img.headerSize, imgOut);
     fwrite(img.colorTable, sizeof(*img.colorTable), img.colorCount, imgOut);
     fwrite(img.pxArrMod, sizeof(*img.pxArrMod), img.pxArrSize, imgOut);
@@ -155,12 +183,13 @@ void createStego(const char *fname, BMP img)
 // Frees memory allocated for BMP structure pointed to by imgPtr. Returns none.
 void freeImage(BMP *imgPtr)
 {
-    // Deallocates the space previously allocated by malloc()
+    // Deallocates the memory previously allocated by malloc()
     free(imgPtr->header);
     free(imgPtr->pxArr);
     free(imgPtr->pxArrMod);
 
-    if (imgPtr->colorTable != NULL) // Checks if color table exists
+    // Deallocates memory used by color table if it exists
+    if (imgPtr->colorTable != NULL)
     {
         free(imgPtr->colorTable);
     }
@@ -173,45 +202,46 @@ void freeImage(BMP *imgPtr)
 // to by imgPtr. Returns none.
 void encodeText(const char *fname, BMP *imgPtr)
 {
+    FILE *openText(const char *fname, BMP img); // Function prototype
+
     FILE *textPtr = openText(fname, *imgPtr); // Opens secret text
 
-    int px = 0; // Counter for pixels
-
     // Index of last pixel in first row of pixel array
-    int lastPx = imgPtr->width - 1;
+    size_t lastPx = imgPtr->width - 1;
 
-    // Loops through each character in secret text
-    while (!feof(textPtr))
+    size_t px = 0;  // Index of modified pixel
+    char character; // Next character in secret text
+
+    // Loops through each character in secret text until eof
+    while ((character = getc(textPtr)) != EOF)
     {
-        char character = getc(textPtr); // Obtains character
-
-        if (character > ASCII_MAX)
+        // Skips encoding non-ASCII character
+        if (character < ASCII_MIN || character > ASCII_MAX)
         {
             fprintf(stderr,
-                    "character %c is not in ASCII character set\n",
+                    "warning: skipped encoding character '%c' in encodeText()",
                     character);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
 
         char mask = 1 << (CHAR_BIT - 1); // Bit mask for 8-bit character
 
-        // Loop through each binary digit of the 8-bit character
-        for (unsigned int i = 1; i <= CHAR_BIT; i++)
+        // Loop through each bit of the 8-bit character
+        for (unsigned int i = 0; i < CHAR_BIT; i++)
         {
-            // Determines value of bit
-            if (character & mask) // Bit is 1
+            if (character & mask) // Current bit is 1
             {
                 // Increases pixel value by CHANGE_VALUE
                 imgPtr->pxArrMod[px] += CHANGE_VALUE;
 
-                // Set higher limit for pixel value according to color depth
+                // Sets higher limit for pixel value according to color depth
                 int maxPxValue = imgPtr->colorCount - 1;
                 if (imgPtr->pxArrMod[px] > maxPxValue)
                 {
                     imgPtr->pxArrMod[px] = maxPxValue;
                 }
             }
-            else // Bit is 0
+            else // Current bit is 0
             {
                 // Avoids negative pixel value
                 if (imgPtr->pxArrMod[px] < CHANGE_VALUE)
@@ -229,14 +259,15 @@ void encodeText(const char *fname, BMP *imgPtr)
             // Skip padding in pixel array
             if (px == lastPx)
             {
-                px += imgPtr->padding + 1; // Index of next pixel in next row
+                // Index of first pixel in next row
+                px += imgPtr->padding + 1;
 
-                // Index of the last pixel in next row
+                // Index of last pixel in next row
                 lastPx += imgPtr->width + imgPtr->padding;
             }
             else
             {
-                px++; // Set index of next pixel in the same row
+                px++; // Set index of next pixel in current row
             }
 
             character <<= 1; // Shift bits of character by 1 bit to the right
@@ -257,25 +288,25 @@ FILE *openText(const char *fname, BMP img)
         fprintf(stderr,
                 "error opening secret text %s in openText()\n",
                 fname);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
-    // Counts character in secret text
-    unsigned int charCount = 0;
-    while (!feof(filePtr))
-    {
-        char character = getc(filePtr); // Obtain character
+    unsigned int charCount = 0; // Character counter
+    int character;              // Character in secret text
 
-        // Terminates program if character is not representable with 8 bits
-        if (character >= pow(2, CHAR_BIT))
+    // Loop through each character in secret text
+    while ((character = getc(filePtr)) != EOF)
+    {
+        // Terminates program if text contains non-ASCII character
+        if (character < ASCII_MIN || character > ASCII_MAX)
         {
             fprintf(stderr,
-                    "secret text %s contains invalid character\n",
+                    "file error: %s contains non-ASCII character\n",
                     fname);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
 
-        charCount++;
+        charCount++; // Increment character counter
     }
     rewind(filePtr); // Sets file pointer at the beginning of file stream
 
@@ -293,7 +324,7 @@ FILE *openText(const char *fname, BMP img)
                 "secret text %s has too many characters\n"
                 "%u pixels is needed but cover image only has %u pixels.\n",
                 fname, pxNeed, pxTotal);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     return filePtr;
@@ -303,82 +334,80 @@ FILE *openText(const char *fname, BMP img)
 // stegImg and cover image origImg. Returns none.
 void decodeText(BMP origImg, BMP stegImg, const char *fname)
 {
-    // Checks if pixel array for cover image and stego image are the same
+    // Terminates program if pixel array size of cover and stego image
+    // are not equal. Suggests that the images are not related to each other.
     if (origImg.pxArrSize != stegImg.pxArrSize)
     {
         fprintf(stderr,
                 "%s",
                 "different cover image and stego image in decodeText()\n");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
-    FILE *text = fopen(fname, "w"); // Opens file for secret text
+    FILE *decodedTxt = fopen(fname, "w"); // Opens file for decoded text
 
     // Terminates program if file could not be created
-    if (text == NULL)
+    if (decodedTxt == NULL)
     {
-        fprintf(stderr, "%s",
-                "secret text could not be created in decodeText()\n");
-        exit(1);
+        fprintf(stderr,
+                "decoded text %s could not be created in decodeText()\n",
+                fname);
+        exit(EXIT_FAILURE);
     }
 
-    // Allocates memory for array of pixel value differences
-    int *diffs = malloc(stegImg.pxArrSize * sizeof(*diffs));
-
     // Initializes the index of last pixel in first row of pixel array
-    int lastPx = stegImg.width - 1;
+    size_t lastPx = stegImg.width - 1;
 
-    int decodedBit = 0; // Counter for decoded bit of 8-bit character
-    int character = 0;  // ASCII decimal value of decoded character
+    size_t decodedBit = 0; // Counter for decoded bit of 8-bit character
+    char character = 0;    // ASCII decimal value of decoded character
 
-    // Loop through each pixel in pixel Array
+    int diff; // Difference of corresponding pixels in cover and stego image
+    int bit;  // Bit secretly stored in a pixel
+
+    // Loop through each pixel of cover and stego image
     for (size_t px = 0; px < stegImg.pxArrSize; px++)
     {
-        // Compute the change between values of corresponding
-        // pixel in cover and stego image
-        int diff = stegImg.pxArr[px] - origImg.pxArr[px];
+        // Computes difference of corresponding pixels
+        diff = stegImg.pxArr[px] - origImg.pxArr[px];
 
-        // Dettermines the bit value represented by the change
-        if (diff >= CHANGE_VALUE) // Negative change
+        // Dettermines the bit represented by the difference
+        if (diff >= CHANGE_VALUE) // Positive difference
         {
-            // Negative change in value indicates that the original pixel
-            // was increased that suggests a bit value of 1 based from the
-            // original encoding algorithm.
-            diffs[px] = 1;
+            bit = 1; // Current pixel stores a bit value of 1
         }
-        else if (diff <= 0) // Positive or zero change
+        else if (diff <= 0) // Positive or zero difference
         {
-            diffs[px] = 0;
+            bit = 0; // Current pixel stores a bit value of 0
         }
 
         // Updates value of current character
-        character += pow(2, 8 - (decodedBit + 1)) * diffs[px];
+        character += (char)pow(2, 8 - (decodedBit + 1)) * bit;
         decodedBit++; // Increments number of decoded bit for current character
 
         // Checks if current character is fully decoded
         if ((decodedBit != 0) && (decodedBit % CHAR_BIT == 0))
         {
-            // Stops decoding until null or non-ASCII character
+            // Skips decoding null or non-ASCII character
             if (character <= ASCII_MIN || character > ASCII_MAX)
             {
                 break;
             }
 
-            fputc(character, text); // Display character
-            decodedBit = 0;         // Reset counter for decoded bit
-            character = 0;          // Reset ASCII value for next character
+            fputc(character, decodedTxt); // Display character
+            decodedBit = 0;               // Reset counter for decoded bit
+            character = 0;                // Reset ASCII decimal value
         }
 
         // Skip padding in pixel array
         if (px == lastPx)
         {
-            px += stegImg.padding; // Index of first pixel in next row
+            // Index of first pixel in next row
+            px += stegImg.padding;
 
             // Index of last pixel in next row
             lastPx += stegImg.width + stegImg.padding;
         }
     }
 
-    free(diffs);
-    fclose(text);
+    fclose(decodedTxt);
 }

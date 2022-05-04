@@ -5,4 +5,4 @@ decode: decode.c stegano.c
 	gcc -o decode.exe decode.c stegano.c
 
 clean:
-	rm *.exe *.stackdump
+	rm *.exe *.stackdump *.log

@@ -1,3 +1,5 @@
 *.exe
 *.stackdump
 *.log
+.vscode
+temp.c

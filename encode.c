@@ -18,33 +18,46 @@
 
 int main(void)
 {
-    // Displays program description
-    FILE *prompt = fopen("prompt.txt", "r");
-    char line[FNAME_MAX];
-    for (unsigned int i = 0; i < 12; i++)
-    {
-        fgets(line, FNAME_MAX, prompt);
-        printf("%s", line);
-    }
-    putchar('\n');
+    const char *asciiArt = "assets\\computerArt.txt"; // Filename of ASCII art
+    showBackground(asciiArt);                         // Displays screen background
 
-    // Opens cover image
-    char cover[FNAME_MAX];
-    printf("|=^_^=| Input a cover Image (.bmp file format):");
-    scanf("%s", cover);
+    setCursorPos(24, 16); // Moves terminal cursor
+    puts("Enter filename of the following files.");
 
-    // Opens secret text
-    char secret[FNAME_MAX];
-    printf("|=0_0=| Input a Secret Text (.txt file format):");
-    scanf("%s", secret);
+    setCursorPos(14, 18);
+    printf("%s", "Cover image (.bmp): "); // Displays user prompt
+    char cover[FNAME_MAX];                // Filename of cover image
+    scanf("%s", cover);                   // Obtains filename of cover image
 
-    // Opens stego name
-    char stego[FNAME_MAX];
-    printf("|=*_*=| Input a Stego Image (.bmp file format):");
-    scanf("%s", stego);
+    setCursorPos(14, 19);
+    printf("%s", "Secret text (.txt): ");
+    char secret[FNAME_MAX];               // Filename of secret text
+    scanf("%s", secret);                  // Obtains filename of secret text
 
-    BMP *imagePtr = loadImage(cover); // Creates BMP structure for cover image
-    encodeText(secret, imagePtr);     // Hides secret message
-    createStego(stego, *imagePtr);    // Creates new file for stego image
-    freeImage(imagePtr);              // Closes cover image
+    setCursorPos(14, 20);
+    printf("%s", "Stego image (.bmp): ");
+    char stego[FNAME_MAX];                // Filename of stego image
+    scanf("%s", stego);                   // Obtains filename of stego image
+
+    char *cover = "assets\\rizal.bmp";
+    char *secret = "assets\\novels.txt";
+    char *stego = "stegoNew.bmp";
+
+    BMP *imagePtr = loadImage(cover);     // Creates BMP structure for cover image
+    encodeText(secret, imagePtr);         // Hides secret text into the cover image
+    createStego(stego, *imagePtr);        // Creates stego image
+    freeImage(imagePtr);                  // Closes cover image
+
+    showBackground(asciiArt);             // Update screen background
+
+    setCursorPos(22, 16);
+    puts(">>> STEGO IMAGE SUCCESSFULLY CREATED! <<<\n");
+    setCursorPos(14, 18);
+    printf("Cover image found at %s", cover);
+    setCursorPos(14, 19);
+    printf("Secret text found at %s", secret);
+    setCursorPos(14, 20);
+    printf("Stego image saved at %s", stego);
+
+    setCursorPos(0, 36); // Move cursor to the last line of screen
 }
