@@ -40,6 +40,36 @@ void showBackground(const char *fname)
     fclose(art); // Closes text file containing ASCII art
 }
 
+void getFnameEncode(char *cover, char *secret, char *stego)
+{
+    setCursorPos(14, 18);
+    printf("%s", "Cover image (.bmp): ");
+    scanf("%s", cover); // Obtains filename of cover image
+
+    setCursorPos(14, 19);
+    printf("%s", "Secret text (.txt): ");
+    scanf("%s", secret); // Obtains filename of secret text
+
+    setCursorPos(14, 20);
+    printf("%s", "Stego image (.bmp): ");
+    scanf("%s", stego); // Obtains filename of stego image
+}
+
+void getFnameDecode(char *cover, char *stego, char *decoded)
+{
+    setCursorPos(14, 18);
+    printf("%s", "Cover image (.bmp): ");
+    scanf("%s", cover); // Obtains filename of cover image
+
+    setCursorPos(14, 19);
+    printf("%s", "Stego image (.bmp): ");
+    scanf("%s", stego); // Obtains filename of stego image
+
+    setCursorPos(14, 20);
+    printf("%s", "Decoded text (.txt): ");
+    scanf("%s", decoded); // Obtains filename of decoded text
+}
+
 // Opens a bitmap image indicated by fname. Returns pointer to
 // BMP structure of the image.
 BMP *loadImage(const char *fname)

@@ -24,31 +24,17 @@ int main(void)
     setCursorPos(24, 16); // Moves terminal cursor
     puts("Enter filename of the following files.");
 
-    setCursorPos(14, 18);
-    printf("%s", "Cover image (.bmp): "); // Displays user prompt
     char cover[FNAME_MAX];                // Filename of cover image
-    scanf("%s", cover);                   // Obtains filename of cover image
-
-    setCursorPos(14, 19);
-    printf("%s", "Secret text (.txt): ");
     char secret[FNAME_MAX];               // Filename of secret text
-    scanf("%s", secret);                  // Obtains filename of secret text
-
-    setCursorPos(14, 20);
-    printf("%s", "Stego image (.bmp): ");
     char stego[FNAME_MAX];                // Filename of stego image
-    scanf("%s", stego);                   // Obtains filename of stego image
+    getFnameEncode(cover, secret, stego); // Obtain filenames
 
-    char *cover = "assets\\rizal.bmp";
-    char *secret = "assets\\novels.txt";
-    char *stego = "stegoNew.bmp";
+    BMP *imagePtr = loadImage(cover); // Creates BMP structure for cover image
+    encodeText(secret, imagePtr);     // Hides secret text into the cover image
+    createStego(stego, *imagePtr);    // Creates stego image
+    freeImage(imagePtr);              // Closes cover image
 
-    BMP *imagePtr = loadImage(cover);     // Creates BMP structure for cover image
-    encodeText(secret, imagePtr);         // Hides secret text into the cover image
-    createStego(stego, *imagePtr);        // Creates stego image
-    freeImage(imagePtr);                  // Closes cover image
-
-    showBackground(asciiArt);             // Update screen background
+    showBackground(asciiArt); // Update screen background
 
     setCursorPos(22, 16);
     puts(">>> STEGO IMAGE SUCCESSFULLY CREATED! <<<\n");

@@ -39,13 +39,13 @@ struct bitmap // Structure representing bitmap images
 {
     FILE *filePtr; // File pointer for the image
 
-    DWORD headerSize;  // Size of the image header in bytes
-    LONG width;        // Width of image in pixels
-    LONG height;       // Height of image in pixels
-    WORD bitDepth;     // Number of bits per pixel
-    DWORD colorCount;  // Number of colors in color pallete
-    DWORD pxArrSize;   // Size of pixel array in bytes
-    DWORD padding;     // Padding for pixel array in bytes
+    DWORD headerSize; // Size of the image header in bytes
+    LONG width;       // Width of image in pixels
+    LONG height;      // Height of image in pixels
+    WORD bitDepth;    // Number of bits per pixel
+    DWORD colorCount; // Number of colors in color pallete
+    DWORD pxArrSize;  // Size of pixel array in bytes
+    DWORD padding;    // Padding for pixel array in bytes
 
     BYTE *header;      // Content of image header
     DWORD *colorTable; // Content of color table
@@ -56,6 +56,9 @@ struct bitmap // Structure representing bitmap images
 typedef struct bitmap BMP;
 
 void showBackground(const char *fname);
+void getFnameEncode(char *cover, char *secret, char *stego);
+void getFnameDecode(char *cover, char *stego, char *decoded);
+
 BMP *loadImage(const char *fname);
 void printProperties(BMP img);
 void encodeText(const char *fname, BMP *imgPtr);
