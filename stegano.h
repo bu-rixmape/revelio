@@ -27,7 +27,7 @@
 #define ASCII_MIN 0
 #define ASCII_MAX 127
 
-// Moves terminal cursor to (x,y) position
+// Moves cursor to (x,y) position in terminal
 #define setCursorPos(x, y) printf("\033[%d;%dH", (y), (x))
 
 typedef unsigned char BYTE;  // 1 byte
@@ -39,13 +39,13 @@ struct bitmap // Structure representing bitmap images
 {
     FILE *filePtr; // File pointer for the image
 
-    DWORD headerSize;  // Size of the image header in bytes
-    LONG width;        // Width of image in pixels
-    LONG height;       // Height of image in pixels
-    WORD bitDepth;     // Number of bits per pixel
-    DWORD colorCount;  // Number of colors in color pallete
-    DWORD pxArrSize;   // Size of pixel array in bytes
-    DWORD padding;     // Padding for pixel array in bytes
+    DWORD headerSize; // Size of the image header in bytes
+    LONG width;       // Width of image in pixels
+    LONG height;      // Height of image in pixels
+    WORD bitDepth;    // Number of bits per pixel
+    DWORD colorCount; // Number of colors in color pallete
+    DWORD pxArrSize;  // Size of pixel array in bytes
+    DWORD padding;    // Padding for pixel array in bytes
 
     BYTE *header;      // Content of image header
     DWORD *colorTable; // Content of color table

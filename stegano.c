@@ -16,6 +16,7 @@
 
 #include "stegano.h"
 
+// Displays ASCII-art for terminal background. Returns none.
 void showBackground(const char *fname)
 {
     printf("%s", "\033[H\033[J");  // Clears terminal screen
