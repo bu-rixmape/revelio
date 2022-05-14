@@ -356,14 +356,14 @@ FILE *openText(const char *fname, BMP img)
 }
 
 // Writes secret text into file indicated by fname based from stego image
-// stegImg and cover image origImg. Returns none.
-void decodeText(BMP origImg, BMP stegImg, const char *fname)
+// stegImg and cover image covImg. Returns none.
+void decodeText(BMP covImg, BMP stegImg, const char *fname)
 {
     verifyFname(fname, ".txt", "decodeText()");
 
     // Terminates program if pixel array size of cover and stego image
     // are not equal. Suggests that the images are not related to each other.
-    if (origImg.pxArrSize != stegImg.pxArrSize)
+    if (covImg.pxArrSize != stegImg.pxArrSize)
     {
         clearTerminal();
         fprintf(stderr,
@@ -399,7 +399,7 @@ void decodeText(BMP origImg, BMP stegImg, const char *fname)
     for (size_t px = 0; px < stegImg.pxArrSize; px++)
     {
         // Computes difference of corresponding pixels
-        diff = stegImg.pxArr[px] - origImg.pxArr[px];
+        diff = stegImg.pxArr[px] - covImg.pxArr[px];
 
         // Dettermines the bit represented by the difference
         if (diff >= CHANGE_VALUE) // Positive difference

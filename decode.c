@@ -47,15 +47,19 @@ int main(void)
     printf("%s", "Decoded text (.txt): ");
     scanf("%s", decoded);
 
-    BMP *coverImage = loadImage(cover); // Opens cover image
-    BMP *stegoImage = loadImage(stego); // Opens stego image
+    BMP *coverImagePtr = loadImage(cover); // Opens cover image
+    BMP *stegoImagePtr = loadImage(stego); // Opens stego image
+
+    // Dereferences pointer for passing by value
+    BMP coverImage = *coverImagePtr;
+    BMP stegoImage = *stegoImagePtr;
 
     // Compares cover and stego image to decode secret text
-    decodeText(*coverImage, *stegoImage, decoded);
+    decodeText(coverImage, stegoImage, decoded);
 
     // Releases memory allocated to cover and stego image
-    freeImage(coverImage);
-    freeImage(stegoImage);
+    freeImage(coverImagePtr);
+    freeImage(stegoImagePtr);
 
     showBackground(asciiArt); // Update screen background
 

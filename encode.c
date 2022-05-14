@@ -50,8 +50,10 @@ int main(void)
 
     BMP *imagePtr = loadImage(cover); // Creates BMP structure for cover image
     encodeText(secret, imagePtr);     // Hides secret text into the cover image
-    createStego(stego, *imagePtr);    // Creates stego image
-    freeImage(imagePtr);              // Closes cover image
+
+    BMP image = *imagePtr;     // Dereferences pointer for passing by value
+    createStego(stego, image); // Creates stego image
+    freeImage(imagePtr);       // Closes cover image
 
     showBackground(asciiArt); // Update screen background
 
