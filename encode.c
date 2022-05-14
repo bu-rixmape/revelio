@@ -38,20 +38,20 @@ int main(void)
     printf("%s", "Cover image (.bmp): ");
     scanf("%s", cover);
 
-    // Obtains filename of secret text
-    setCursorPos(14, 19);
-    printf("%s", "Secret text (.txt): ");
-    scanf("%s", secret);
+    // // Obtains filename of secret text
+    // setCursorPos(14, 19);
+    // printf("%s", "Secret text (.txt): ");
+    // scanf("%s", secret);
 
-    // Obtains filename of stego image
-    setCursorPos(14, 20);
-    printf("%s", "Stego image (.bmp): ");
-    scanf("%s", stego);
+    // // Obtains filename of stego image
+    // setCursorPos(14, 20);
+    // printf("%s", "Stego image (.bmp): ");
+    // scanf("%s", stego);
 
     BMP *imagePtr = loadImage(cover); // Creates BMP structure for cover image
-    encodeText(secret, imagePtr);     // Hides secret text into the cover image
-    createStego(stego, *imagePtr);    // Creates stego image
-    freeImage(imagePtr);              // Closes cover image
+    // encodeText(secret, imagePtr);     // Hides secret text into the cover image
+    // createStego(stego, *imagePtr);    // Creates stego image
+    // freeImage(imagePtr);              // Closes cover image
 
     showBackground(asciiArt); // Update screen background
 
@@ -59,10 +59,10 @@ int main(void)
     puts(">>> STEGO IMAGE SUCCESSFULLY CREATED! <<<\n");
     setCursorPos(14, 18);
     printf("Cover image found at %s", cover);
-    setCursorPos(14, 19);
-    printf("Secret text found at %s", secret);
-    setCursorPos(14, 20);
-    printf("Stego image saved at %s", stego);
+    // setCursorPos(14, 19);
+    // printf("Secret text found at %s", secret);
+    // setCursorPos(14, 20);
+    // printf("Stego image saved at %s", stego);
 
     setCursorPos(0, 36); // Move cursor to the last line of terminal
 }

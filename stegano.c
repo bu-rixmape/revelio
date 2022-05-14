@@ -16,20 +16,26 @@
 
 #include "stegano.h"
 
+// Deletes content of terminal. Returns none.
+void clearTerminal(void)
+{
+    printf("%s", "\033[H\033[J"); // Clears content of terminal
+    fflush(stdout);               // Flushes buffer of stdout
+}
+
 // Displays ASCII-art for terminal background. Returns none.
 void showBackground(const char *fname)
 {
-    printf("%s", "\033[H\033[J");  // Clears terminal screen
-    fflush(stdout);                // Flushes stdout's buffer
+    clearTerminal();
     FILE *art = fopen(fname, "r"); // Opens text file containing ASCII art
 
     // Terminates program if opening file failed
     if (art == NULL)
     {
         fprintf(stderr,
-                "fopen() failed: %s could not be opened in showBackground()",
+                "fopen() failed: %s could not be opened in showBackground()\n",
                 fname);
-        exit(EXIT_FAILURE); // Return control to operating system
+        exit(EXIT_FAILURE); // Returns control to operating system
     }
 
     int ch;                         // Next character in ASCII art
@@ -47,13 +53,24 @@ BMP *loadImage(const char *fname)
 {
     void storeProperties(BMP * imgPtr); // Function prototype
 
-    const char *extension = strrchr(fname, '.'); // Obatins file extension
+    const char *extension = strrchr(fname, '.'); // Obtains file extension
+
+    // Terminates program if file format is not bitmap
+    if (extension == NULL)
+    {
+        clearTerminal();
+        fprintf(stderr,
+                "invalid file format: %s has no file extension in loadImage()\n",
+                fname);
+        exit(EXIT_FAILURE);
+    }
 
     // Terminates program if file format is not bitmap
     if (strcmp(extension, ".bmp"))
     {
+        clearTerminal();
         fprintf(stderr,
-                "invalid file format: %s is not a bitmap file in loadImage()",
+                "invalid file format: %s is not a bitmap file in loadImage()\n",
                 fname);
         exit(EXIT_FAILURE);
     }
@@ -64,8 +81,9 @@ BMP *loadImage(const char *fname)
     // Terminates program if opening the image failed
     if (imgPtr->filePtr == NULL)
     {
+        clearTerminal();
         fprintf(stderr,
-                "fopen() failed: %s could not be opened in loadImage()",
+                "fopen() failed: %s could not be opened in loadImage()\n",
                 fname);
         free(imgPtr); // Free allocated memory for cover image
         exit(EXIT_FAILURE);
@@ -146,6 +164,7 @@ void storeProperties(BMP *imgPtr)
 // Prints image properties of BMP structure img. Returns none.
 void printProperties(BMP img)
 {
+    clearTerminal();
     puts("IMAGE PROPERTIES");
     printf("%-14s: %d bytes\n", "Header size", img.headerSize);
     printf("%-14s: %d pixels\n", "Image width", img.width);
@@ -165,8 +184,9 @@ void createStego(const char *fname, BMP img)
     // Terminates program if file format is not bitmap
     if (strcmp(extension, ".bmp"))
     {
+        clearTerminal();
         fprintf(stderr,
-                "invalid file format: %s is not a bitmap file in creatStego()",
+                "invalid file format: %s is not a bitmap file in creatStego()\n",
                 fname);
         exit(EXIT_FAILURE);
     }
@@ -219,8 +239,9 @@ void encodeText(const char *fname, BMP *imgPtr)
         // Skips encoding non-ASCII character
         if (character < ASCII_MIN || character > ASCII_MAX)
         {
+            clearTerminal();
             fprintf(stderr,
-                    "warning: skipped encoding character '%c' in encodeText()",
+                    "warning: skipped encoding character '%c' in encodeText()\n",
                     character);
             exit(EXIT_FAILURE);
         }
@@ -286,6 +307,7 @@ FILE *openText(const char *fname, BMP img)
     // Terminates program if opening file failed
     if (filePtr == NULL)
     {
+        clearTerminal();
         fprintf(stderr,
                 "error opening secret text %s in openText()\n",
                 fname);
@@ -301,6 +323,7 @@ FILE *openText(const char *fname, BMP img)
         // Terminates program if text contains non-ASCII character
         if (character < ASCII_MIN || character > ASCII_MAX)
         {
+            clearTerminal();
             fprintf(stderr,
                     "file error: %s contains non-ASCII character\n",
                     fname);
@@ -321,6 +344,7 @@ FILE *openText(const char *fname, BMP img)
     // Terminates program if secret text cannot fit in cover image
     if (pxNeed > pxTotal)
     {
+        clearTerminal();
         fprintf(stderr,
                 "secret text %s has too many characters\n"
                 "%u pixels is needed but cover image only has %u pixels.\n",
@@ -339,6 +363,7 @@ void decodeText(BMP origImg, BMP stegImg, const char *fname)
     // are not equal. Suggests that the images are not related to each other.
     if (origImg.pxArrSize != stegImg.pxArrSize)
     {
+        clearTerminal();
         fprintf(stderr,
                 "%s",
                 "different cover image and stego image in decodeText()\n");
@@ -350,6 +375,7 @@ void decodeText(BMP origImg, BMP stegImg, const char *fname)
     // Terminates program if file could not be created
     if (decodedTxt == NULL)
     {
+        clearTerminal();
         fprintf(stderr,
                 "decoded text %s could not be created in decodeText()\n",
                 fname);

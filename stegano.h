@@ -55,6 +55,7 @@ struct bitmap // Structure representing bitmap images
 
 typedef struct bitmap BMP;
 
+void clearTerminal(void);
 void showBackground(const char *fname);
 BMP *loadImage(const char *fname);
 void printProperties(BMP img);
