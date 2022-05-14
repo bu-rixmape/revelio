@@ -27,7 +27,7 @@
 #define ASCII_MIN 0
 #define ASCII_MAX 127
 
-// Moves terminal cursor to (x,y) position
+// Moves cursor to (x,y) position in terminal
 #define setCursorPos(x, y) printf("\033[%d;%dH", (y), (x))
 
 typedef unsigned char BYTE;  // 1 byte
@@ -55,6 +55,7 @@ struct bitmap // Structure representing bitmap images
 
 typedef struct bitmap BMP;
 
+void clearTerminal(void);
 void showBackground(const char *fname);
 void getFnameEncode(char *cover, char *secret, char *stego);
 void getFnameDecode(char *cover, char *stego, char *decoded);
