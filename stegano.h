@@ -57,9 +57,7 @@ typedef struct bitmap BMP;
 
 void clearTerminal(void);
 void showBackground(const char *fname);
-void getFnameEncode(char *cover, char *secret, char *stego);
-void getFnameDecode(char *cover, char *stego, char *decoded);
-
+void verifyFname(const char *fname, const char *extension, const char *caller);
 BMP *loadImage(const char *fname);
 void printProperties(BMP img);
 void encodeText(const char *fname, BMP *imgPtr);

@@ -16,6 +16,32 @@
 
 #include "stegano.h"
 
+// Checks validity of filename according to its file extension. Returns none.
+void verifyFname(const char *fname, const char *extension, const char *caller)
+{
+    const char *suffix = strrchr(fname, '.'); // Obtains file extension
+
+    // Terminates program if filename has no file extension
+    if (suffix == NULL)
+    {
+        clearTerminal();
+        fprintf(stderr,
+                "invalid filename: %s has no file extension in %s\n",
+                fname, caller);
+        exit(EXIT_FAILURE);
+    }
+
+    // Terminates program if file format is not bitmap
+    else if (strcmp(suffix, extension))
+    {
+        clearTerminal();
+        fprintf(stderr,
+                "invalid file format: %s is not a %s file in %s\n",
+                fname, extension, caller);
+        exit(EXIT_FAILURE);
+    }
+}
+
 // Deletes content of terminal. Returns none.
 void clearTerminal(void)
 {
@@ -26,6 +52,8 @@ void clearTerminal(void)
 // Displays ASCII-art for terminal background. Returns none.
 void showBackground(const char *fname)
 {
+    verifyFname(fname, ".txt", "showBackground");
+
     clearTerminal();
     FILE *art = fopen(fname, "r"); // Opens text file containing ASCII art
 
@@ -47,63 +75,13 @@ void showBackground(const char *fname)
     fclose(art); // Closes text file containing ASCII art
 }
 
-void getFnameEncode(char *cover, char *secret, char *stego)
-{
-    setCursorPos(14, 18);
-    printf("%s", "Cover image (.bmp): ");
-    scanf("%s", cover); // Obtains filename of cover image
-
-    setCursorPos(14, 19);
-    printf("%s", "Secret text (.txt): ");
-    scanf("%s", secret); // Obtains filename of secret text
-
-    setCursorPos(14, 20);
-    printf("%s", "Stego image (.bmp): ");
-    scanf("%s", stego); // Obtains filename of stego image
-}
-
-void getFnameDecode(char *cover, char *stego, char *decoded)
-{
-    setCursorPos(14, 18);
-    printf("%s", "Cover image (.bmp): ");
-    scanf("%s", cover); // Obtains filename of cover image
-
-    setCursorPos(14, 19);
-    printf("%s", "Stego image (.bmp): ");
-    scanf("%s", stego); // Obtains filename of stego image
-
-    setCursorPos(14, 20);
-    printf("%s", "Decoded text (.txt): ");
-    scanf("%s", decoded); // Obtains filename of decoded text
-}
-
 // Opens a bitmap image indicated by fname. Returns pointer to
 // BMP structure of the image.
 BMP *loadImage(const char *fname)
 {
     void storeProperties(BMP * imgPtr); // Function prototype
 
-    const char *extension = strrchr(fname, '.'); // Obtains file extension
-
-    // Terminates program if file format is not bitmap
-    if (extension == NULL)
-    {
-        clearTerminal();
-        fprintf(stderr,
-                "invalid file format: %s has no file extension in loadImage()\n",
-                fname);
-        exit(EXIT_FAILURE);
-    }
-
-    // Terminates program if file format is not bitmap
-    if (strcmp(extension, ".bmp"))
-    {
-        clearTerminal();
-        fprintf(stderr,
-                "invalid file format: %s is not a bitmap file in loadImage()\n",
-                fname);
-        exit(EXIT_FAILURE);
-    }
+    verifyFname(fname, ".bmp", "loadImage()");
 
     BMP *imgPtr = malloc(sizeof(BMP));   // Allocates memory for cover image
     imgPtr->filePtr = fopen(fname, "r"); // Opens image indicated by fname
@@ -209,17 +187,7 @@ void printProperties(BMP img)
 // structure of cover image that contains the secret text. Returns None.
 void createStego(const char *fname, BMP img)
 {
-    const char *extension = strrchr(fname, '.'); // Obatins file extension
-
-    // Terminates program if file format is not bitmap
-    if (strcmp(extension, ".bmp"))
-    {
-        clearTerminal();
-        fprintf(stderr,
-                "invalid file format: %s is not a bitmap file in creatStego()\n",
-                fname);
-        exit(EXIT_FAILURE);
-    }
+    verifyFname(fname, ".bmp", "createStego()");
 
     FILE *imgOut = fopen(fname, "wb"); // Opens stego image
 
@@ -332,6 +300,8 @@ void encodeText(const char *fname, BMP *imgPtr)
 // Opens secret text indicated by fname. Returns file pointer for secret text.
 FILE *openText(const char *fname, BMP img)
 {
+    verifyFname(fname, ".txt", "openText()");
+
     FILE *filePtr = fopen(fname, "r"); // Open input file
 
     // Terminates program if opening file failed
@@ -389,6 +359,8 @@ FILE *openText(const char *fname, BMP img)
 // stegImg and cover image origImg. Returns none.
 void decodeText(BMP origImg, BMP stegImg, const char *fname)
 {
+    verifyFname(fname, ".txt", "decodeText()");
+
     // Terminates program if pixel array size of cover and stego image
     // are not equal. Suggests that the images are not related to each other.
     if (origImg.pxArrSize != stegImg.pxArrSize)
@@ -396,7 +368,8 @@ void decodeText(BMP origImg, BMP stegImg, const char *fname)
         clearTerminal();
         fprintf(stderr,
                 "%s",
-                "different cover image and stego image in decodeText()\n");
+                "incompatible files: different cover image and stego "
+                "image in decodeText()\n");
         exit(EXIT_FAILURE);
     }
 
@@ -407,7 +380,8 @@ void decodeText(BMP origImg, BMP stegImg, const char *fname)
     {
         clearTerminal();
         fprintf(stderr,
-                "decoded text %s could not be created in decodeText()\n",
+                "fopen error: decoded text %s could not be created in "
+                "decodeText()\n",
                 fname);
         exit(EXIT_FAILURE);
     }
