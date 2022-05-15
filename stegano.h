@@ -21,11 +21,10 @@
 #include <unistd.h>
 #include <wchar.h>
 
-#define FNAME_MAX 100      // Maximum character for filenames
-#define FILEHEADER_SIZE 14 // Size (bytes) of bitmap file header
-#define CHANGE_VALUE 1
-#define ASCII_MIN 0
-#define ASCII_MAX 127
+#define FNAME_MAX 100       // Maximum character for filenames
+#define FILEHEADER_SIZE 14  // Size of bitmap file header (14 bytes)
+#define ASCII_MIN 0         // Minimum value for ASCII character
+#define ASCII_MAX 127       // Maximum value for ASCII character
 
 // Moves cursor to (x, y) position in terminal
 #define setCursorPos(x, y) printf("\033[%d;%dH", (y), (x))
@@ -35,9 +34,9 @@ typedef unsigned int DWORD;  // 4 bytes
 typedef unsigned short WORD; // 2 bytes
 typedef int LONG;            // 4 bytes
 
-struct bitmap // Structure representing bitmap images
+struct bitmap         // Structure representing bitmap images
 {
-    FILE *filePtr; // File pointer for the image
+    FILE *filePtr;    // File pointer for the image
 
     DWORD headerSize; // Size of the image header in bytes
     LONG width;       // Width of image in pixels
@@ -53,8 +52,9 @@ struct bitmap // Structure representing bitmap images
     BYTE *pxArrMod;    // Modified pixel array
 };
 
-typedef struct bitmap BMP;
+typedef struct bitmap BMP; // Defines new data type name for struct bitmap
 
+// Function prototypes
 void showBackground(const char *fname);
 void clearTerminal(void);
 void verifyFname(const char *fname, const char *extension, const char *caller);

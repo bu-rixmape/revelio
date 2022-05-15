@@ -26,37 +26,43 @@ int main(void)
 {
     const char *asciiArt = "assets\\computerArt.txt"; // Filename of ASCII art
     showBackground(asciiArt);                         // Displays terminal background
-    setCursorPos(24, 16);                             // Moves position of cursor in terminal
-    puts("Enter filename of the following files.");   // Displays user prompt
+
+    setCursorPos(26, 16);                             // Moves position of terminal cursor
+    puts("Ready to ENCODE your secret text?");        // Displays user prompt
+    setCursorPos(21, 17);
+    puts("Enter the filename of the following files:");
 
     char cover[FNAME_MAX];  // Filename of cover image
     char secret[FNAME_MAX]; // Filename of secret text
     char stego[FNAME_MAX];  // Filename of stego image
 
     // Obtains filename of cover image
-    setCursorPos(14, 18);
+    setCursorPos(14, 19);
     printf("%s", "Cover image (.bmp): ");
     scanf("%s", cover);
 
     // Obtains filename of secret text
-    setCursorPos(14, 19);
+    setCursorPos(14, 20);
     printf("%s", "Secret text (.txt): ");
     scanf("%s", secret);
 
     // Obtains filename of stego image
-    setCursorPos(14, 20);
+    setCursorPos(14, 21);
     printf("%s", "Stego image (.bmp): ");
     scanf("%s", stego);
 
     BMP *imagePtr = loadImage(cover); // Creates BMP structure for cover image
     encodeText(secret, imagePtr);     // Hides secret text into the cover image
 
-    BMP image = *imagePtr;     // Dereferences pointer for passing by value
-    createStego(stego, image); // Creates stego image
-    freeImage(imagePtr);       // Closes cover image
+    // Dereferences pointer to prepare for passing by value
+    BMP image = *imagePtr;     
 
-    showBackground(asciiArt); // Update screen background
+    createStego(stego, image); // Creates stego image from modified cover image
+    freeImage(imagePtr);       // Releases memory allocated for cover image
 
+    showBackground(asciiArt);  // Displays terminal background
+
+    // Display success message
     setCursorPos(22, 16);
     puts(">>> STEGO IMAGE SUCCESSFULLY CREATED! <<<\n");
     setCursorPos(14, 18);
@@ -66,5 +72,5 @@ int main(void)
     setCursorPos(14, 20);
     printf("Stego image saved at %s", stego);
 
-    setCursorPos(0, 36); // Move cursor to the last line of terminal
+    setCursorPos(0, 36); // Moves cursor to the last line of terminal
 }

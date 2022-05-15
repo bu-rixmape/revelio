@@ -49,7 +49,7 @@ void clearTerminal(void)
     fflush(stdout);               // Flushes buffer of stdout
 }
 
-// Displays ASCII-art for terminal background. Returns none.
+// Displays ASCII-art in terminal. Returns none.
 void showBackground(const char *fname)
 {
     verifyFname(fname, ".txt", "showBackground");
@@ -251,8 +251,8 @@ void encodeText(const char *fname, BMP *imgPtr)
         {
             if (character & mask) // Current bit is 1
             {
-                // Increases pixel value by CHANGE_VALUE
-                imgPtr->pxArrMod[px] += CHANGE_VALUE;
+                // Increases pixel value by 1
+                imgPtr->pxArrMod[px] += 1;
 
                 // Sets higher limit for pixel value according to color depth
                 int maxPxValue = imgPtr->colorCount - 1;
@@ -264,15 +264,15 @@ void encodeText(const char *fname, BMP *imgPtr)
             else // Current bit is 0
             {
                 // Avoids negative pixel value
-                if (imgPtr->pxArrMod[px] < CHANGE_VALUE)
+                if (imgPtr->pxArrMod[px] < 1)
                 {
                     // Sets lower limit for pixel value to 0
                     imgPtr->pxArrMod[px] = 0;
                 }
                 else
                 {
-                    // Decreases pixel value by CHANGE_VALUE
-                    imgPtr->pxArrMod[px] -= CHANGE_VALUE;
+                    // Decreases pixel value by 1
+                    imgPtr->pxArrMod[px] -= 1;
                 }
             }
 
@@ -401,8 +401,8 @@ void decodeText(BMP covImg, BMP stegImg, const char *fname)
         // Computes difference of corresponding pixels
         diff = stegImg.pxArr[px] - covImg.pxArr[px];
 
-        // Dettermines the bit represented by the difference
-        if (diff >= CHANGE_VALUE) // Positive difference
+        // Determines the bit represented by the difference
+        if (diff >= 1) // Positive difference
         {
             bit = 1; // Current pixel stores a bit value of 1
         }
@@ -411,8 +411,9 @@ void decodeText(BMP covImg, BMP stegImg, const char *fname)
             bit = 0; // Current pixel stores a bit value of 0
         }
 
-        // Updates value of current character
+        // Computes the ASCII value of the current character
         character += (char)pow(2, 8 - (decodedBit + 1)) * bit;
+
         decodedBit++; // Increments number of decoded bit for current character
 
         // Checks if current character is fully decoded
@@ -424,18 +425,18 @@ void decodeText(BMP covImg, BMP stegImg, const char *fname)
                 break;
             }
 
-            fputc(character, decodedTxt); // Display character
+            fputc(character, decodedTxt); // Display character into the decoded text file
             decodedBit = 0;               // Reset counter for decoded bit
             character = 0;                // Reset ASCII decimal value
         }
 
-        // Skip padding in pixel array
+        // Checks if the current pixel is the last pixel of current row
         if (px == lastPx)
         {
-            // Index of first pixel in next row
+            // Skip padding to proceed to the first pixel of next row
             px += stegImg.padding;
 
-            // Index of last pixel in next row
+            // Update index of last pixel of next row
             lastPx += stegImg.width + stegImg.padding;
         }
     }
