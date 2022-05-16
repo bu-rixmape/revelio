@@ -336,7 +336,7 @@ FILE *openText(const char *fname, BMP img)
 
     // Computes number of pixels needed to represent a binary digit
     // of each 8-bit (1 byte) character in secret text
-    unsigned int pxNeed = charCount * 8;
+    unsigned int pxNeed = charCount * CHAR_BIT;
 
     // Computes total number of pixels used by the image
     DWORD pxTotal = img.width * img.height;

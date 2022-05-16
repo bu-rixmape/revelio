@@ -41,22 +41,26 @@ int main(void)
     printf("%s", "Cover image (.bmp): ");
     scanf("%s", cover);
 
-    // Obtains filename of secret text
+    BMP *imagePtr = loadImage(cover); // Creates BMP structure for cover image
+
+    // Computes maximum number of characters for secret text
+    unsigned int maxChar = (imagePtr->width * imagePtr->height) / CHAR_BIT;
     setCursorPos(14, 20);
+    printf("Note: Secret text must have at most %u characters", maxChar);
+
+    // Obtains filename of secret text
+    setCursorPos(14, 21);
     printf("%s", "Secret text (.txt): ");
     scanf("%s", secret);
 
+    encodeText(secret, imagePtr);     // Hides secret text into the cover image
+
     // Obtains filename of stego image
-    setCursorPos(14, 21);
+    setCursorPos(14, 22);
     printf("%s", "Stego image (.bmp): ");
     scanf("%s", stego);
 
-    BMP *imagePtr = loadImage(cover); // Creates BMP structure for cover image
-    encodeText(secret, imagePtr);     // Hides secret text into the cover image
-
-    // Dereferences pointer to prepare for passing by value
-    BMP image = *imagePtr;     
-
+    BMP image = *imagePtr;     // Dereferences pointer for passing by value     
     createStego(stego, image); // Creates stego image from modified cover image
     freeImage(imagePtr);       // Releases memory allocated for cover image
 
