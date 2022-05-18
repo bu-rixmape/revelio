@@ -55,12 +55,12 @@ struct bitmap         // Structure representing bitmap images
 typedef struct bitmap BMP; // Defines new data type name for struct bitmap
 
 // Function prototypes
-void showBackground(const char *fname);
+int showBackground(const char *fname);
 void clearTerminal(void);
-void verifyFname(const char *fname, const char *extension, const char *caller);
+int verifyFilename(const char *fname, const char *extension, const char *caller);
 BMP *loadImage(const char *fname);
-void printProperties(BMP img);
-void encodeText(const char *fname, BMP *imgPtr);
-void createStego(const char *fname, BMP img);
-void freeImage(BMP *imgPtr);
-void decodeText(BMP covImg, BMP stegImg, const char *fname);
+int printProperties(BMP img);
+int encodeText(const char *fname, BMP *imgPtr);
+int createStego(const char *fname, BMP img);
+int freeImage(BMP *imgPtr);
+int decodeText(BMP covImg, BMP stegImg, const char *fname);

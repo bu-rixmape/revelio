@@ -16,8 +16,9 @@
 
 #include "stegano.h"
 
-// Checks validity of filename according to its file extension. Returns none.
-void verifyFname(const char *fname, const char *extension, const char *caller)
+// Checks validity of filename according to its file extension.
+// Returns 0 on success.
+int verifyFilename(const char *fname, const char *extension, const char *caller)
 {
     const char *suffix = strrchr(fname, '.'); // Obtains file extension
 
@@ -40,6 +41,8 @@ void verifyFname(const char *fname, const char *extension, const char *caller)
                 fname, extension, caller);
         exit(EXIT_FAILURE);
     }
+
+    return 0; // Filename is valid
 }
 
 // Deletes content of terminal. Returns none.
@@ -49,10 +52,11 @@ void clearTerminal(void)
     fflush(stdout);               // Flushes buffer of stdout
 }
 
-// Displays ASCII-art in terminal. Returns none.
-void showBackground(const char *fname)
+// Displays ASCII-art, which is stored in text file indicated by fname,
+// in terminal. Returns 0 on success.
+int showBackground(const char *fname)
 {
-    verifyFname(fname, ".txt", "showBackground");
+    verifyFilename(fname, ".txt", "showBackground");
 
     clearTerminal();
     FILE *art = fopen(fname, "r"); // Opens text file containing ASCII art
@@ -73,15 +77,17 @@ void showBackground(const char *fname)
     }
 
     fclose(art); // Closes text file containing ASCII art
+
+    return 0;
 }
 
 // Opens a bitmap image indicated by fname. Returns pointer to
 // BMP structure of the image.
 BMP *loadImage(const char *fname)
 {
-    void storeProperties(BMP * imgPtr); // Function prototype
+    int storeProperties(BMP * imgPtr); // Function prototype
 
-    verifyFname(fname, ".bmp", "loadImage()");
+    verifyFilename(fname, ".bmp", "loadImage()");
 
     BMP *imgPtr = malloc(sizeof(BMP));   // Allocates memory for cover image
     imgPtr->filePtr = fopen(fname, "r"); // Opens image indicated by fname
@@ -101,9 +107,9 @@ BMP *loadImage(const char *fname)
     return imgPtr;
 }
 
-// Stores properties of the image represented by the BMP structure
-// pointed to by imgPtr. Returns none.
-void storeProperties(BMP *imgPtr)
+// Initializes structure members representing image properties of BMP structure
+// pointed to by imgPtr. Returns 0 on success.
+int storeProperties(BMP *imgPtr)
 {
     // Obtains DIB header size measured in bytes
     fseek(imgPtr->filePtr, FILEHEADER_SIZE, SEEK_SET);
@@ -167,10 +173,12 @@ void storeProperties(BMP *imgPtr)
 
     // Computes padding in pixel array
     imgPtr->padding = pxRowSize - imgPtr->width;
+
+    return 0; // Structure members for image properties successfully initialized
 }
 
-// Prints image properties of BMP structure img. Returns none.
-void printProperties(BMP img)
+// Prints image properties of img in stdin. Returns 0 on success.
+int printProperties(BMP img)
 {
     clearTerminal();
     puts("IMAGE PROPERTIES");
@@ -181,13 +189,15 @@ void printProperties(BMP img)
     printf("%-14s: %d colors\n", "Color count", img.colorCount);
     printf("%-14s: %d bytes\n", "Pixel array", img.pxArrSize);
     printf("%-14s: %d byte\n", "Padding", img.padding);
+
+    return 0;
 }
 
-// Creates stego image indicated by fname. Uses the modified bitmap file
-// structure of cover image that contains the secret text. Returns None.
-void createStego(const char *fname, BMP img)
+// Creates stego image indicated by fname from the modified bitmap file
+// structure of cover image indicated by img. Returns 0 on success.
+int createStego(const char *fname, BMP img)
 {
-    verifyFname(fname, ".bmp", "createStego()");
+    verifyFilename(fname, ".bmp", "createStego()");
 
     FILE *imgOut = fopen(fname, "wb"); // Opens stego image
 
@@ -197,10 +207,13 @@ void createStego(const char *fname, BMP img)
     fwrite(img.pxArrMod, sizeof(*img.pxArrMod), img.pxArrSize, imgOut);
 
     fclose(imgOut);
+
+    return 0; // Stego image is successfully created
 }
 
-// Frees memory allocated for BMP structure pointed to by imgPtr. Returns none.
-void freeImage(BMP *imgPtr)
+// Releases memory allocated for BMP structure pointed to by imgPtr. 
+// Returns 0 on success.
+int freeImage(BMP *imgPtr)
 {
     // Deallocates the memory previously allocated by malloc()
     free(imgPtr->header);
@@ -215,11 +228,13 @@ void freeImage(BMP *imgPtr)
 
     fclose(imgPtr->filePtr); // Closes the file pointer for cover image
     free(imgPtr);            // Deallocates memory for BMP structure
+
+    return 0;
 }
 
-// Encodes secret text indicated by fname into the BMP structure pointed
-// to by imgPtr. Returns none.
-void encodeText(const char *fname, BMP *imgPtr)
+// Encodes secret text in the file indicated by fname into the
+// BMP structure pointed to by imgPtr. Returns none.
+int encodeText(const char *fname, BMP *imgPtr)
 {
     FILE *openText(const char *fname, BMP img); // Function prototype
 
@@ -295,12 +310,14 @@ void encodeText(const char *fname, BMP *imgPtr)
     }
 
     fclose(textPtr); // Closes secret text
+
+    return 0; // Secret text succesfully encoded
 }
 
 // Opens secret text indicated by fname. Returns file pointer for secret text.
 FILE *openText(const char *fname, BMP img)
 {
-    verifyFname(fname, ".txt", "openText()");
+    verifyFilename(fname, ".txt", "openText()");
 
     FILE *filePtr = fopen(fname, "r"); // Open input file
 
@@ -355,12 +372,10 @@ FILE *openText(const char *fname, BMP img)
     return filePtr;
 }
 
-// Writes secret text into file indicated by fname based from stego image
-// stegImg and cover image covImg. Returns none.
-void decodeText(BMP covImg, BMP stegImg, const char *fname)
+// Writes the secret text intothe  text file indicated by fname. Secret text is
+// decoded from stego image stegImg and cover image covImg. Returns none.
+int decodeText(BMP covImg, BMP stegImg, const char *fname)
 {
-    verifyFname(fname, ".txt", "decodeText()");
-
     // Terminates program if pixel array size of cover and stego image
     // are not equal. Suggests that the images are not related to each other.
     if (covImg.pxArrSize != stegImg.pxArrSize)
@@ -372,6 +387,8 @@ void decodeText(BMP covImg, BMP stegImg, const char *fname)
                 "image in decodeText()\n");
         exit(EXIT_FAILURE);
     }
+
+    verifyFilename(fname, ".txt", "decodeText()");
 
     FILE *decodedTxt = fopen(fname, "w"); // Opens file for decoded text
 
@@ -442,4 +459,6 @@ void decodeText(BMP covImg, BMP stegImg, const char *fname)
     }
 
     fclose(decodedTxt);
+
+    return 0; // Secret text successfully decoded
 }
